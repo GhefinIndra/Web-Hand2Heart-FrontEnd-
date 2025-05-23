@@ -8,11 +8,38 @@ const DonationRequestPage = () => {
   const [selectedOrphanage, setSelectedOrphanage] = useState(null);
   const [selectedRequest, setSelectedRequest] = useState(null);
   const [donationAmount, setDonationAmount] = useState("");
+  const [donorMessage, setDonorMessage] = useState(""); // ✅ Tambahkan ini
   const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
-  // Fetch data panti dan kebutuhan dari backend
   useEffect(() => {
-    const fetchDonations = async () => {
+  const useDummy = false; // 🔁 Ganti ke false jika mau pakai API
+
+  const fetchDonations = async () => {
+    if (useDummy) {
+      // ✅ Data dummy
+      const dummyData = [
+        {
+          id: 1,
+          orphanageName: "Panti Asuhan Kasih Ibu",
+          city: "Bandung",
+          requests: [
+            { item: "Beras", quantity: 100 },
+            { item: "Minyak Goreng", quantity: 50 },
+          ],
+        },
+        {
+          id: 2,
+          orphanageName: "Panti Asuhan Harapan Bangsa",
+          city: "Jakarta",
+          requests: [
+            { item: "Buku Tulis", quantity: 200 },
+            { item: "Pulpen", quantity: 150 },
+          ],
+        },
+      ];
+      setDonations(dummyData);
+    } else {
+      // 🌐 Fetch dari API
       try {
         const responsePanti = await axios.get("http://localhost:8080/api/panti");
         const orphanages = responsePanti.data;
@@ -38,20 +65,24 @@ const DonationRequestPage = () => {
       } catch (error) {
         console.error("Error fetching donation data:", error);
       }
-    };
+    }
+  };
 
-    fetchDonations();
-  }, []);
+  fetchDonations();
+}, []);
+
 
   const handleOrphanageSelect = (orphanage) => {
     setSelectedOrphanage(orphanage);
     setSelectedRequest(null);
     setDonationAmount("");
+    setDonorMessage(""); // Reset pesan juga
   };
 
   const handleRequestSelect = (request) => {
     setSelectedRequest(request);
     setDonationAmount("");
+    setDonorMessage("");
   };
 
   const handleDonationAmountChange = (e) => {
@@ -77,7 +108,6 @@ const DonationRequestPage = () => {
         return;
       }
 
-      // Ambil data user dari localStorage
       const user = JSON.parse(localStorage.getItem("user"));
       if (!user || !user.id) {
         alert("User belum login.");
@@ -89,6 +119,7 @@ const DonationRequestPage = () => {
         pantiAsuhan: { id: selectedOrphanage.id },
         item: selectedRequest.item,
         amount: parseInt(donationAmount),
+        message: donorMessage, // ✅ Tambahkan ke payload
       };
 
       const response = await axios.post(
@@ -99,21 +130,17 @@ const DonationRequestPage = () => {
       if (response.status === 200) {
         setShowSuccessPopup(true);
 
-        // Perbarui data kebutuhan setelah donasi
         const updatedRequests = selectedOrphanage.requests.map((req) =>
           req.item === selectedRequest.item
-            ? {
-                ...req,
-                quantity: req.quantity - donationData.amount,
-              }
+            ? { ...req, quantity: req.quantity - donationData.amount }
             : req
         );
 
         setSelectedOrphanage({ ...selectedOrphanage, requests: updatedRequests });
 
-        // Reset form input
         setDonationAmount("");
         setSelectedRequest(null);
+        setDonorMessage(""); // ✅ Reset pesan
       }
     } catch (error) {
       console.error("Error submitting donation:", error);
@@ -212,6 +239,20 @@ const DonationRequestPage = () => {
                   )}
               </div>
 
+              {/* ✅ Tambahkan input pesan */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Pesan untuk Panti Asuhan (opsional):
+                </label>
+                <textarea
+                  value={donorMessage}
+                  onChange={(e) => setDonorMessage(e.target.value)}
+                  placeholder="Contoh: Semoga bermanfaat 😊"
+                  className="w-full p-2 border rounded-md"
+                  rows={3}
+                />
+              </div>
+
               <button
                 onClick={handleSubmitDonation}
                 className={`w-full py-3 rounded-lg transition flex items-center justify-center ${
@@ -227,7 +268,6 @@ const DonationRequestPage = () => {
           </div>
         )}
 
-        {/* Success Popup */}
         {showSuccessPopup && (
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
             <div className="bg-white rounded-lg shadow-lg p-6 w-80 text-center animate-popup">
