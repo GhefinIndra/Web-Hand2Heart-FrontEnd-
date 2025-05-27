@@ -330,6 +330,12 @@ const ProfilePage = () => {
                           : "Donasi Barang"}
                       </span>
                     </div>
+                    {/* Tambahan: Tampilkan pesan donatur jika ada */}
+                    {donation.message && (
+                      <div className="mt-2 text-sm text-gray-700 italic">
+                        Pesan: "{donation.message}"
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
