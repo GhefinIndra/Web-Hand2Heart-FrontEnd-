@@ -93,7 +93,7 @@ const Register = () => {
       try {
         // Debug: Log form data sebelum dikirim
         console.log('Form data to send:', {
-          fullName: formData.fullName,
+          full_name: formData.fullName,
           email: formData.email,
           phone: formData.phone,
           password: formData.password,

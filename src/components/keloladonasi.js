@@ -66,10 +66,11 @@ const KeloladonasiPage = () => {
     };
   };
 
+  // FIX: Add dependency array to prevent infinite loop
   useEffect(() => {
     fetchPantiInfo();
     fetchItems();
-  }, [pantiId]);
+  }, [pantiId]); // Only re-run when pantiId changes
 
   const fetchPantiInfo = async () => {
     try {
@@ -99,7 +100,7 @@ const KeloladonasiPage = () => {
   const fetchItems = async () => {
     setIsLoading(true);
     try {
-      console.log('=== FETCHING DONATIONS FROM LARAVEL ===');
+      console.log('=== FETCHING BARANG FOR PANTI ===');
       
       const headers = getAuthHeaders();
       if (!headers) {
@@ -108,22 +109,23 @@ const KeloladonasiPage = () => {
         return;
       }
 
-      console.log('Fetching donations for panti:', pantiId);
+      console.log('Fetching barang for panti:', pantiId);
       console.log('Using headers:', headers);
 
-      const response = await axios.get(`http://127.0.0.1:8000/api/donations/panti/${pantiId}`, {
+      // Ubah API endpoint untuk mengambil barang, bukan donasi
+      const response = await axios.get(`http://127.0.0.1:8000/api/barang/${pantiId}`, {
         headers
       });
 
-      console.log('Donations response:', response.data);
+      console.log('Barang response:', response.data);
 
       if (response.data.success) {
-        setItems(response.data.data || []);
+        setItems(response.data.data || []); // Barang akan ditampilkan
       } else {
-        throw new Error(response.data.message || 'Failed to fetch donations');
+        throw new Error(response.data.message || 'Failed to fetch barang');
       }
     } catch (error) {
-      console.error("Error fetching donations:", error);
+      console.error("Error fetching barang:", error);
       if (error.response) {
         console.error("Error response:", error.response.data);
         if (error.response.status === 401) {
@@ -163,7 +165,7 @@ const KeloladonasiPage = () => {
     }
 
     try {
-      console.log('=== SUBMITTING DONATION TO LARAVEL ===');
+      console.log('=== SUBMITTING BARANG TO LARAVEL ===');
       
       const headers = getAuthHeaders();
       if (!headers) {
@@ -172,11 +174,14 @@ const KeloladonasiPage = () => {
         return;
       }
 
+      // FIXED: Map frontend form data to Barang model fields
       const submitData = {
-        ...formData,
-        panti_id: pantiId,
-        target: Number(formData.target),
-        terkumpul: Number(formData.terkumpul || 0)
+        panti_id: parseInt(pantiId), // Ensure it's integer
+        namaBarang: formData.nama, // Map 'nama' to 'namaBarang'
+        deskripsi: formData.deskripsi || '', // Keep as is
+        jumlah: parseInt(formData.target), // Map 'target' to 'jumlah' and ensure integer
+        satuan: 'buah', // Default unit
+        is_active: true // Default to active
       };
 
       console.log('Submit data:', submitData);
@@ -184,11 +189,13 @@ const KeloladonasiPage = () => {
 
       let response;
       if (editingItem) {
-        response = await axios.put(`http://127.0.0.1:8000/api/donations/${editingItem.id}`, submitData, {
+        // Update barang jika sedang mengedit
+        response = await axios.put(`http://127.0.0.1:8000/api/barang/${editingItem.id}`, submitData, {
           headers
         });
       } else {
-        response = await axios.post('http://127.0.0.1:8000/api/donations', submitData, {
+        // Tambah barang baru
+        response = await axios.post('http://127.0.0.1:8000/api/barang', submitData, {
           headers
         });
       }
@@ -196,11 +203,11 @@ const KeloladonasiPage = () => {
       console.log('Submit response:', response.data);
 
       if (response.data.success) {
-        fetchItems();
+        fetchItems(); // Refresh data barang setelah disubmit
         resetForm();
-        alert(editingItem ? 'Item berhasil diperbarui!' : 'Item berhasil ditambahkan!');
+        alert(editingItem ? 'Barang berhasil diperbarui!' : 'Barang berhasil ditambahkan!');
       } else {
-        throw new Error(response.data.message || 'Failed to save item');
+        throw new Error(response.data.message || 'Failed to save barang');
       }
 
     } catch (error) {
@@ -214,11 +221,18 @@ const KeloladonasiPage = () => {
           navigate('/login');
           return;
         } else if (error.response.status === 422) {
-          // Validation errors
+          // Validation errors - show detailed error info
           const validationErrors = error.response.data.errors || {};
+          console.log('Validation errors:', validationErrors);
           setErrors(validationErrors);
+          
+          // Show user-friendly error message
+          const errorMessages = Object.values(validationErrors).flat();
+          if (errorMessages.length > 0) {
+            alert(`Validation Error: ${errorMessages.join(', ')}`);
+          }
         } else {
-          alert(`Error: ${error.response.data.message || 'Failed to save item'}`);
+          alert(`Error: ${error.response.data.message || 'Failed to save barang'}`);
         }
       } else {
         alert("Gagal terhubung ke server.");
@@ -235,7 +249,7 @@ const KeloladonasiPage = () => {
     if (!itemToDelete) return;
 
     try {
-      console.log('=== DELETING ITEM FROM LARAVEL ===');
+      console.log('=== DELETING BARANG FROM LARAVEL ===');
       
       const headers = getAuthHeaders();
       if (!headers) {
@@ -244,22 +258,22 @@ const KeloladonasiPage = () => {
         return;
       }
 
-      console.log('Deleting item:', itemToDelete);
+      console.log('Deleting barang:', itemToDelete);
       console.log('Using headers:', headers);
 
-      const response = await axios.delete(`http://127.0.0.1:8000/api/donations/${itemToDelete}`, {
+      const response = await axios.delete(`http://127.0.0.1:8000/api/barang/${itemToDelete}`, {
         headers
       });
 
       console.log('Delete response:', response.data);
 
       if (response.data.success) {
-        fetchItems();
+        fetchItems(); // Refresh data barang setelah dihapus
         setShowDeleteConfirm(false);
         setItemToDelete(null);
-        alert('Item berhasil dihapus!');
+        alert('Barang berhasil dihapus!');
       } else {
-        throw new Error(response.data.message || 'Failed to delete item');
+        throw new Error(response.data.message || 'Failed to delete barang');
       }
 
     } catch (error) {
@@ -272,7 +286,7 @@ const KeloladonasiPage = () => {
           navigate('/login');
           return;
         }
-        alert(`Error: ${error.response.data.message || 'Failed to delete item'}`);
+        alert(`Error: ${error.response.data.message || 'Failed to delete barang'}`);
       } else {
         alert("Gagal terhubung ke server.");
       }
@@ -287,10 +301,10 @@ const KeloladonasiPage = () => {
   const editItem = (item) => {
     setEditingItem(item);
     setFormData({
-      nama: item.nama || '',
+      nama: item.namaBarang || '', // Map 'namaBarang' back to 'nama' for form
       deskripsi: item.deskripsi || '',
-      target: item.target || '',
-      terkumpul: item.terkumpul || 0
+      target: item.jumlah || '', // Map 'jumlah' back to 'target' for form
+      terkumpul: 0 // Barang model doesn't have terkumpul field
     });
     setShowForm(true);
   };
@@ -355,7 +369,7 @@ const KeloladonasiPage = () => {
             <div className="flex justify-between items-center">
               <div>
                 <h1 className="text-2xl font-bold text-gray-800">
-                  Kelola Donasi
+                  Kelola Barang Kebutuhan
                 </h1>
                 <p className="text-gray-600 mt-1">
                   {pantiInfo ? `Panti: ${pantiInfo.namaPanti || pantiInfo.nama}` : 'Memuat info panti...'}
@@ -379,7 +393,7 @@ const KeloladonasiPage = () => {
               <div className="bg-white rounded-lg shadow-sm">
                 <div className="p-6 border-b border-gray-200">
                   <h2 className="text-lg font-semibold text-gray-800">
-                    Daftar Item Donasi
+                    Daftar Barang Kebutuhan
                   </h2>
                 </div>
                 
@@ -392,24 +406,30 @@ const KeloladonasiPage = () => {
                   ) : items.length === 0 ? (
                     <div className="text-center py-8">
                       <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                      <p className="text-gray-600 mb-4">Belum ada item donasi</p>
+                      <p className="text-gray-600 mb-4">Belum ada barang kebutuhan</p>
                       <button
                         onClick={() => setShowForm(true)}
                         className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition"
                       >
-                        Tambah Item Pertama
+                        Tambah Barang Pertama
                       </button>
                     </div>
                   ) : (
                     <div className="space-y-4">
                       {items.map((item) => (
                         <div key={item.id} className="border border-gray-200 rounded-lg p-4">
+                          {/* FIX: Handle Barang model fields properly */}
                           <div className="flex justify-between items-start mb-3">
                             <div className="flex-1">
-                              <h3 className="font-semibold text-gray-800">{item.nama}</h3>
+                              <h3 className="font-semibold text-gray-800">
+                                {item.namaBarang || 'Nama tidak tersedia'}
+                              </h3>
                               {item.deskripsi && (
                                 <p className="text-sm text-gray-500 mt-1">{item.deskripsi}</p>
                               )}
+                              <p className="text-sm text-gray-500 mt-1">
+                                Jumlah: {item.jumlah} {item.satuan}
+                              </p>
                             </div>
                             
                             <div className="flex items-center space-x-2 ml-4">
@@ -428,32 +448,20 @@ const KeloladonasiPage = () => {
                             </div>
                           </div>
                           
-                          {/* Progress Bar */}
-                          <div className="mb-3">
-                            <div className="flex justify-between text-sm text-gray-600 mb-1">
-                              <span>Progress</span>
-                              <span>{Math.round(getProgressPercentage(item.terkumpul, item.target))}%</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div
-                                className="bg-blue-600 h-2 rounded-full transition-all"
-                                style={{ width: `${getProgressPercentage(item.terkumpul, item.target)}%` }}
-                              ></div>
-                            </div>
-                          </div>
+                          {/* REMOVED: Progress Bar (not applicable for Barang model) */}
                           
-                          {/* Stats */}
+                          {/* Stats - Modified for Barang */}
                           <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                              <p className="text-gray-600">Terkumpul</p>
-                              <p className="font-semibold text-green-600">
-                                {formatCurrency(item.terkumpul || 0)}
+                              <p className="text-gray-600">Jumlah Barang</p>
+                              <p className="font-semibold text-blue-600">
+                                {item.jumlah} {item.satuan}
                               </p>
                             </div>
                             <div>
-                              <p className="text-gray-600">Target</p>
-                              <p className="font-semibold text-blue-600">
-                                {formatCurrency(item.target || 0)}
+                              <p className="text-gray-600">Status</p>
+                              <p className={`font-semibold ${item.is_active ? 'text-green-600' : 'text-red-600'}`}>
+                                {item.is_active ? 'Aktif' : 'Tidak Aktif'}
                               </p>
                             </div>
                           </div>
@@ -472,7 +480,7 @@ const KeloladonasiPage = () => {
                   <div className="p-6 border-b border-gray-200">
                     <div className="flex justify-between items-center">
                       <h2 className="text-lg font-semibold text-gray-800">
-                        {editingItem ? 'Edit Item' : 'Tambah Item Baru'}
+                        {editingItem ? 'Edit Barang' : 'Tambah Barang Baru'}
                       </h2>
                       <button
                         onClick={resetForm}
@@ -487,7 +495,7 @@ const KeloladonasiPage = () => {
                     {/* Nama */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Nama Item *
+                        Nama Barang *
                       </label>
                       <input
                         type="text"
@@ -522,10 +530,10 @@ const KeloladonasiPage = () => {
                       />
                     </div>
 
-                    {/* Target */}
+                    {/* Target/Jumlah */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Target (Rp) *
+                        Jumlah Kebutuhan *
                       </label>
                       <input
                         type="number"
@@ -535,7 +543,7 @@ const KeloladonasiPage = () => {
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none ${
                           errors.target ? 'border-red-300' : 'border-gray-300'
                         }`}
-                        placeholder="100000"
+                        placeholder="10"
                         min="1"
                       />
                       {errors.target && (
@@ -546,23 +554,7 @@ const KeloladonasiPage = () => {
                       )}
                     </div>
 
-                    {/* Terkumpul (only show when editing) */}
-                    {editingItem && (
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                          Terkumpul (Rp)
-                        </label>
-                        <input
-                          type="number"
-                          name="terkumpul"
-                          value={formData.terkumpul}
-                          onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                          placeholder="0"
-                          min="0"
-                        />
-                      </div>
-                    )}
+                    {/* Remove Terkumpul field since Barang model doesn't have it */}
 
                     {/* Buttons */}
                     <div className="flex space-x-3 pt-4">
@@ -600,7 +592,7 @@ const KeloladonasiPage = () => {
               </h3>
             </div>
             <p className="text-gray-600 mb-6">
-              Apakah Anda yakin ingin menghapus item donasi ini? Tindakan ini tidak dapat dibatalkan.
+              Apakah Anda yakin ingin menghapus barang kebutuhan ini? Tindakan ini tidak dapat dibatalkan.
             </p>
             <div className="flex space-x-3">
               <button

@@ -66,64 +66,64 @@ const Login = () => {
           password: formData.password,
         });
   
-        console.log('Login successful:', response.data);
+        console.log('Login response:', response.data);
   
         const responseData = response.data;
         
-        // Cari userData dengan berbagai kemungkinan struktur
-        let userData = null;
+        // Pastikan response success
+        if (!responseData.success) {
+          throw new Error(responseData.message || 'Login gagal');
+        }
+
+        // Extract data dari response
+        const loginData = responseData.data; // { token: "...", user: {...} }
+        const token = loginData.token;
+        const user = loginData.user;
         
-        // Kemungkinan 1: response.data.data
-        if (responseData.data) {
-          userData = responseData.data;
-          console.log('Found userData in responseData.data:', userData);
+        console.log('Extracted login data:', loginData);
+        console.log('Token:', token);
+        console.log('User data:', user);
+        console.log('User role:', user.role);
+
+        // Validasi data yang diperlukan
+        if (!token) {
+          throw new Error('Token tidak ditemukan dalam response');
         }
-        // Kemungkinan 2: response.data.user
-        else if (responseData.user) {
-          userData = responseData.user;
-          console.log('Found userData in responseData.user:', userData);
-        }
-        // Kemungkinan 3: response.data langsung
-        else {
-          userData = responseData;
-          console.log('Using responseData as userData:', userData);
-        }
-  
-        // Debug userData
-        console.log('Final userData:', userData);
-        console.log('userData keys:', Object.keys(userData));
-  
-        // Simpan userData ke localStorage
-        localStorage.setItem("user", JSON.stringify(userData));
-        if (userData.token) {
-          localStorage.setItem("token", userData.token);
-        }
-  
-        // Akses role dengan benar - role ada di userData.user.role
-        let role = null;
         
-        if (userData.user && userData.user.role) {
-          role = userData.user.role;
-          console.log('Found role in userData.user.role:', role);
-        } else if (userData.role) {
-          role = userData.role;
-          console.log('Found role in userData.role:', role);
+        if (!user || !user.email) {
+          throw new Error('Data user tidak lengkap');
         }
-  
-        console.log('Final extracted role:', role);
-        console.log('Role type:', typeof role);
-  
+
+        if (!user.role) {
+          throw new Error('Role user tidak ditemukan');
+        }
+
+        // Simpan ke localStorage dengan format yang benar
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        
+        // PENTING: Setup axios defaults untuk semua request selanjutnya
+        setupAxiosDefaults(token, user.email);
+        
+        console.log('Data saved to localStorage:');
+        console.log('- Token:', localStorage.getItem("token"));
+        console.log('- User:', JSON.parse(localStorage.getItem("user")));
+
         // Routing berdasarkan role
+        const role = user.role;
+        console.log('Routing based on role:', role);
+
         if (role === "pj_panti") {
           console.log('Redirecting to /adminpanti');
           navigate("/adminpanti");
         } else if (role === "donatur") {
           console.log('Redirecting to /donasi');
           navigate("/donasi");
+        } else if (role === "admin") {
+          console.log('Redirecting to /admin');
+          navigate("/admin"); // atau route admin yang sesuai
         } else {
-          console.log('Unknown role:', role);
-          console.log('Available userData for debugging:', userData);
-          // Default redirect
+          console.warn('Unknown role:', role, '- defaulting to /donasi');
           navigate("/donasi");
         }
   
@@ -144,8 +144,6 @@ const Login = () => {
           } else if (errorData.errors) {
             const firstErrorKey = Object.keys(errorData.errors)[0];
             errorMessage = errorData.errors[firstErrorKey][0] || errorMessage;
-          } else if (errorData.success === false && errorData.message) {
-            errorMessage = errorData.message;
           }
         } else if (error.message) {
           errorMessage = error.message;
@@ -156,6 +154,20 @@ const Login = () => {
         setIsLoading(false);
       }
     }
+  };
+
+  // Function untuk setup axios defaults
+  const setupAxiosDefaults = (token, email) => {
+    // Set default headers untuk semua request axios
+    axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    axios.defaults.headers.common['X-User-Email'] = email;
+    axios.defaults.headers.common['Content-Type'] = 'application/json';
+    
+    console.log('Axios defaults set:', {
+      'Authorization': `Bearer ${token.substring(0, 20)}...`,
+      'X-User-Email': email,
+      'Content-Type': 'application/json'
+    });
   };
 
   const renderInput = (name, label, type = 'text', icon, placeholder) => {

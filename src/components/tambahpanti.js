@@ -8,6 +8,8 @@ const TambahPanti = () => {
   const [formData, setFormData] = useState({
     namaPanti: "",
     kota: "",
+    kontak: "",
+    deskripsi: "",
   });
 
   const [message, setMessage] = useState("");
@@ -94,13 +96,12 @@ const TambahPanti = () => {
 
       console.log("Using user email:", userEmail);
 
-      // Prepare data for Laravel API (include required fields)
+      // Prepare data for Laravel API
       const requestData = {
         namaPanti: formData.namaPanti.trim(),
         kota: formData.kota.trim(),
-        alamat: "Alamat belum diisi", // Default value since form doesn't have alamat
-        kontak: "Kontak belum diisi", // Default value since form doesn't have kontak
-        deskripsi: "" // Optional field
+        kontak: formData.kontak.trim(),
+        deskripsi: formData.deskripsi.trim()
       };
 
       console.log("Request data:", requestData);
@@ -111,7 +112,7 @@ const TambahPanti = () => {
       });
 
       const response = await axios.post(
-        "http://127.0.0.1:8000/api/panti", // Updated URL for Laravel
+        "http://127.0.0.1:8000/api/panti",
         requestData,
         {
           headers: {
@@ -128,6 +129,8 @@ const TambahPanti = () => {
         setFormData({
           namaPanti: "",
           kota: "",
+          kontak: "",
+          deskripsi: "",
         });
 
         setMessage("Panti berhasil ditambahkan!");
@@ -186,12 +189,13 @@ const TambahPanti = () => {
               name="namaPanti"
               value={formData.namaPanti}
               onChange={handleChange}
-              className="w-full p-2 border rounded-md"
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Masukkan nama panti asuhan"
               required
               disabled={isLoading}
             />
           </div>
+          
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Kota *
@@ -201,24 +205,48 @@ const TambahPanti = () => {
               name="kota"
               value={formData.kota}
               onChange={handleChange}
-              className="w-full p-2 border rounded-md"
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               placeholder="Masukkan nama kota"
               required
               disabled={isLoading}
             />
           </div>
-          
-          {/* Info note */}
-          <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-md">
-            <p className="text-sm text-blue-700">
-              <strong>Info:</strong> Alamat dan kontak dapat diatur nanti setelah panti dibuat.
-            </p>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Nomor Kontak *
+            </label>
+            <input
+              type="text"
+              name="kontak"
+              value={formData.kontak}
+              onChange={handleChange}
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Masukkan nomor telepon/WhatsApp"
+              required
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Deskripsi
+            </label>
+            <textarea
+              name="deskripsi"
+              value={formData.deskripsi}
+              onChange={handleChange}
+              rows="4"
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Masukkan deskripsi singkat tentang panti asuhan (opsional)"
+              disabled={isLoading}
+            />
           </div>
 
           <button
             type="submit"
             disabled={isLoading}
-            className={`text-blue-600 border border-blue-600 rounded-lg p-2 hover:bg-blue-600 hover:text-white transition ${
+            className={`w-full text-white bg-blue-600 rounded-lg p-3 hover:bg-blue-700 transition font-medium ${
               isLoading ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
@@ -227,7 +255,7 @@ const TambahPanti = () => {
         </form>
         
         {message && (
-          <p className={`mt-4 text-center ${
+          <p className={`mt-4 text-center font-medium ${
             message.includes("berhasil") ? "text-green-600" : "text-red-600"
           }`}>
             {message}
@@ -237,7 +265,7 @@ const TambahPanti = () => {
         <button
           onClick={() => navigate("/adminpanti")}
           disabled={isLoading}
-          className={`mt-4 w-full bg-gray-300 text-gray-700 py-2 px-4 rounded-lg hover:bg-gray-400 transition ${
+          className={`mt-4 w-full bg-gray-300 text-gray-700 py-3 px-4 rounded-lg hover:bg-gray-400 transition font-medium ${
             isLoading ? 'opacity-50 cursor-not-allowed' : ''
           }`}
         >

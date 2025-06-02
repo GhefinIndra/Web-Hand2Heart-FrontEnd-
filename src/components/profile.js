@@ -78,44 +78,55 @@ const ProfilePage = () => {
   };
   
   // Update handleEditToggle juga:
-  const handleEditToggle = async () => {
-    if (isEditing) {
-      try {
-        const user = JSON.parse(localStorage.getItem("user"));
-        const token = localStorage.getItem("token");
-        
-        const response = await axios.put(
-          `http://127.0.0.1:8000/api/user/${user.id}`,
-          {
-            username: editedProfile.username,
-            email: editedProfile.email,
-            phone: editedProfile.phone,
-          },
-          {
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'X-User-Email': user.email,
-              'Content-Type': 'application/json'
-            }
+  // Fixed handleEditToggle function
+const handleEditToggle = async () => {
+  if (isEditing) {
+    try {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const token = localStorage.getItem("token");
+      
+      // ✅ PERBAIKAN: Kirim data dengan field yang benar
+      const response = await axios.put(
+        `http://127.0.0.1:8000/api/user/${user.id}`,
+        {
+          full_name: editedProfile.username,  // ✅ Ubah dari 'username' ke 'full_name'
+          email: editedProfile.email,
+          phone: editedProfile.phone,
+          // role: user.role,  // ✅ Tambahkan field role yang wajib
+          // password: 'unchanged'  // ✅ Atau hapus validasi password di backend
+        },
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'X-User-Email': user.email,
+            'Content-Type': 'application/json'
           }
-        );
-        
-        if (response.data.success) {
-          setUserProfile(response.data.user);
-          showCustomSnackBar("Profil berhasil diperbarui");
-          
-          // Update localStorage
-          localStorage.setItem('user', JSON.stringify(response.data.user));
-        } else {
-          throw new Error(response.data.message || 'Update failed');
         }
-      } catch (error) {
-        console.error("Error updating profile:", error);
-        showCustomSnackBar("Gagal memperbarui profil. Silakan coba lagi.");
+      );
+      
+      if (response.data.success) {
+        setUserProfile(response.data.user);
+        showCustomSnackBar("Profil berhasil diperbarui");
+        
+        // Update localStorage
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+      } else {
+        throw new Error(response.data.message || 'Update failed');
       }
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      
+      // ✅ Tambahkan logging detail error
+      if (error.response) {
+        console.log('Server Response:', error.response.data);
+        console.log('Validation Errors:', error.response.data.errors);
+      }
+      
+      showCustomSnackBar("Gagal memperbarui profil. Silakan coba lagi.");
     }
-    setIsEditing(!isEditing);
-  };
+  }
+  setIsEditing(!isEditing);
+};
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;

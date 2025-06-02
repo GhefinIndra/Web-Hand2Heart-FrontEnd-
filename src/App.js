@@ -9,6 +9,7 @@ import About from './components/aboutus';
 import AdminDonasi from './components/keloladonasi'
 import AdminPanti from './components/pageadmin'
 import TambahPanti from './components/tambahpanti';
+import DonationHistory from './components/donation_history';
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="/admindonasi/:pantiId" element={<AdminDonasi />} />
         <Route path="/adminpanti" element={<AdminPanti />} />
         <Route path="/tambahpanti" element={<TambahPanti />} />
+        <Route path="/donation-history" element={<DonationHistory />} />
       </Routes>
     </div>
   );
