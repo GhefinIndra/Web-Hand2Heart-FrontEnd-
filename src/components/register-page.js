@@ -1,3 +1,5 @@
+
+
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -89,17 +91,44 @@ const Register = () => {
     if (validateForm()) {
       setIsLoading(true);
       try {
-        const response = await axios.post('http://localhost:8080/api/user/register', {
+        // Debug: Log form data sebelum dikirim
+        console.log('Form data to send:', {
           fullName: formData.fullName,
           email: formData.email,
           phone: formData.phone,
           password: formData.password,
           role: formData.role,
         });
+  
+        // Hapus bagian CSRF cookie request
+        // try {
+        //   const csrfResponse = await axios.get('http://127.0.0.1:8000/sanctum/csrf-cookie');
+        //   console.log('CSRF cookie set successfully');
+        // } catch (csrfError) {
+        //   console.warn('Failed to get CSRF cookie:', csrfError);
+        // }
+  
+        const response = await axios.post('http://127.0.0.1:8000/api/register', {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          password: formData.password,
+          role: formData.role,
+        });
+        // Hapus { withCredentials: true } dari sini
+        
         console.log('Registration successful:', response.data);
         navigate('/login');
       } catch (error) {
-        const errorMessage = error.response?.data?.message || 'Terjadi kesalahan saat registrasi.';
+        console.error('Full error object:', error);
+        console.error('Error response:', error.response);
+        console.error('Error status:', error.response?.status);
+        console.error('Error data:', error.response?.data);
+  
+        const errorMessage = error.response?.data?.message || 
+                            error.response?.data?.error || 
+                            error.message || 
+                            'Terjadi kesalahan saat registrasi.';
         setErrors({ api: errorMessage });
         console.error('Error during registration:', errorMessage);
       } finally {
@@ -324,5 +353,5 @@ const Register = () => {
     </div>
   );
 };
-
+<meta name="csrf-token" content="{{ csrf_token() }}"></meta>
 export default Register;
