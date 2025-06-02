@@ -35,41 +35,80 @@ const ProfilePage = () => {
     setIsLoading(true);
     try {
       const user = JSON.parse(localStorage.getItem("user"));
-      if (!user || !user.id) {
+      const token = localStorage.getItem("token");
+      
+      if (!user || !user.id || !token) {
         alert("User belum login.");
         navigate("/login");
         return;
       }
-
+  
+      console.log('=== FETCHING USER PROFILE FROM LARAVEL ===');
+  
       const response = await axios.get(
-        `http://localhost:8080/api/user/profile/${user.id}`
+        `http://127.0.0.1:8000/api/user/profile/${user.id}`,
+        {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'X-User-Email': user.email,
+            'Content-Type': 'application/json'
+          }
+        }
       );
-
-      setUserProfile(response.data.user);
-      setEditedProfile(response.data.user);
-      setDonationHistory(response.data.donations || []);
+  
+      console.log('Profile response:', response.data);
+  
+      if (response.data.success) {
+        setUserProfile(response.data.user);
+        setEditedProfile(response.data.user);
+        setDonationHistory(response.data.donations || []);
+      } else {
+        throw new Error(response.data.message || 'Failed to fetch profile');
+      }
     } catch (error) {
       console.error("Error fetching user profile:", error);
-      alert("Gagal memuat profil. Silakan coba lagi.");
+      if (error.response) {
+        alert(`Error: ${error.response.data.message || 'Gagal memuat profil'}`);
+      } else {
+        alert("Gagal memuat profil. Silakan coba lagi.");
+      }
     } finally {
       setIsLoading(false);
     }
   };
-
+  
+  // Update handleEditToggle juga:
   const handleEditToggle = async () => {
     if (isEditing) {
       try {
         const user = JSON.parse(localStorage.getItem("user"));
+        const token = localStorage.getItem("token");
+        
         const response = await axios.put(
-          `http://localhost:8080/api/user/${user.id}`,
+          `http://127.0.0.1:8000/api/user/${user.id}`,
           {
             username: editedProfile.username,
             email: editedProfile.email,
             phone: editedProfile.phone,
+          },
+          {
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'X-User-Email': user.email,
+              'Content-Type': 'application/json'
+            }
           }
         );
-        setUserProfile(response.data);
-        showCustomSnackBar("Profil berhasil diperbarui");
+        
+        if (response.data.success) {
+          setUserProfile(response.data.user);
+          showCustomSnackBar("Profil berhasil diperbarui");
+          
+          // Update localStorage
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+        } else {
+          throw new Error(response.data.message || 'Update failed');
+        }
       } catch (error) {
         console.error("Error updating profile:", error);
         showCustomSnackBar("Gagal memperbarui profil. Silakan coba lagi.");
