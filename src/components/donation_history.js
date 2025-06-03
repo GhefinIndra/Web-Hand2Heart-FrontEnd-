@@ -1,5 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { Calendar, Package, Heart, ChevronRight, X, Gift, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import {
+  Calendar,
+  Package,
+  Heart,
+  ChevronRight,
+  X,
+  Gift,
+  AlertCircle,
+} from "lucide-react";
 
 const DonationHistoryPage = () => {
   const [donationHistory, setDonationHistory] = useState([]);
@@ -15,79 +23,95 @@ const DonationHistoryPage = () => {
   const fetchDonationHistory = async () => {
     setIsLoading(true);
     setError(null);
-    
+
     try {
-      const token = localStorage.getItem('token');
-      console.log('Token:', token ? 'exists' : 'missing');
-      
+      const token = localStorage.getItem("token");
+      console.log("Token:", token ? "exists" : "missing");
+
       // Make sure you're using the correct endpoint URL
-      const response = await fetch('/api/donation', {
+      const user = JSON.parse(localStorage.getItem("user"));
+      const response = await fetch("http://127.0.0.1:8000/api/donation", {
         headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        }
-        });
-      
-      console.log('Response status:', response.status);
-      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
-      
+          Authorization: `Bearer ${token}`,
+          "X-User-Email": user?.email || "",
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+      });
+
+      console.log("Response status:", response.status);
+      console.log(
+        "Response headers:",
+        Object.fromEntries(response.headers.entries())
+      );
+
       // Check if response is actually JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
+      const contentType = response.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
         const textResponse = await response.text();
-        console.error('Non-JSON response received:', textResponse);
-        throw new Error(`Expected JSON but got ${contentType}. Response: ${textResponse.substring(0, 200)}...`);
+        console.error("Non-JSON response received:", textResponse);
+        throw new Error(
+          `Expected JSON but got ${contentType}. Response: ${textResponse.substring(
+            0,
+            200
+          )}...`
+        );
       }
-      
+
       const data = await response.json();
-      console.log('API Response:', data);
-      
+      console.log("API Response:", data);
+
       if (response.ok && data.success) {
         setDonationHistory(data.data || []);
       } else {
-        throw new Error(data.message || `HTTP ${response.status}: ${response.statusText}`);
+        throw new Error(
+          data.message || `HTTP ${response.status}: ${response.statusText}`
+        );
       }
-      
     } catch (error) {
-      console.error('Error fetching donation history:', error);
-      
+      console.error("Error fetching donation history:", error);
+
       // Set more detailed error message
-      if (error.name === 'SyntaxError' && error.message.includes('Unexpected token')) {
-        setError('Server returned HTML instead of JSON. Please check your API endpoint and authentication.');
+      if (
+        error.name === "SyntaxError" &&
+        error.message.includes("Unexpected token")
+      ) {
+        setError(
+          "Server returned HTML instead of JSON. Please check your API endpoint and authentication."
+        );
       } else {
         setError(error.message);
       }
-      
+
       // Load sample data for demo purposes
       setDonationHistory([
         {
           id: 1,
-          panti: { name: 'Panti Asuhan Kasih Ibu', kota: 'Jakarta' },
-          item_name: 'Baju Bekas Layak Pakai',
+          panti: { name: "Panti Asuhan Kasih Ibu", kota: "Jakarta" },
+          item_name: "Baju Bekas Layak Pakai",
           amount: 1,
-          message: 'Semoga berkah',
-          status: 'approved',
-          created_at: '2025-04-10T10:00:00Z'
+          message: "Semoga berkah",
+          status: "approved",
+          created_at: "2025-04-10T10:00:00Z",
         },
         {
           id: 2,
-          panti: { name: 'Rumah Yatim Piatu Nur Iman', kota: 'Bandung' },
-          item_name: 'Buku Pelajaran SD',
+          panti: { name: "Rumah Yatim Piatu Nur Iman", kota: "Bandung" },
+          item_name: "Buku Pelajaran SD",
           amount: 10,
-          message: 'Semoga bermanfaat untuk pendidikan',
-          status: 'pending',
-          created_at: '2025-03-28T14:30:00Z'
+          message: "Semoga bermanfaat untuk pendidikan",
+          status: "pending",
+          created_at: "2025-03-28T14:30:00Z",
         },
         {
           id: 3,
-          panti: { name: 'Panti Asuhan Cahaya Kasih', kota: 'Surabaya' },
-          item_name: 'Paket Sembako',
+          panti: { name: "Panti Asuhan Cahaya Kasih", kota: "Surabaya" },
+          item_name: "Paket Sembako",
           amount: 5,
-          message: 'Untuk kebutuhan sehari-hari',
-          status: 'approved',
-          created_at: '2025-03-02T09:15:00Z'
-        }
+          message: "Untuk kebutuhan sehari-hari",
+          status: "approved",
+          created_at: "2025-03-02T09:15:00Z",
+        },
       ]);
     } finally {
       setIsLoading(false);
@@ -96,28 +120,36 @@ const DonationHistoryPage = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('id-ID', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric'
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
     });
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'approved': return 'text-green-600 bg-green-50';
-      case 'pending': return 'text-yellow-600 bg-yellow-50';
-      case 'rejected': return 'text-red-600 bg-red-50';
-      default: return 'text-gray-600 bg-gray-50';
+      case "approved":
+        return "text-green-600 bg-green-50";
+      case "pending":
+        return "text-yellow-600 bg-yellow-50";
+      case "rejected":
+        return "text-red-600 bg-red-50";
+      default:
+        return "text-gray-600 bg-gray-50";
     }
   };
 
   const getStatusText = (status) => {
     switch (status) {
-      case 'approved': return 'Disetujui';
-      case 'pending': return 'Menunggu';
-      case 'rejected': return 'Ditolak';
-      default: return 'Unknown';
+      case "approved":
+        return "Disetujui";
+      case "pending":
+        return "Menunggu";
+      case "rejected":
+        return "Ditolak";
+      default:
+        return "Unknown";
     }
   };
 
@@ -134,7 +166,7 @@ const DonationHistoryPage = () => {
         <h3 className="text-lg font-bold text-red-700">Error</h3>
       </div>
       <p className="text-sm text-red-600 mb-4">{error}</p>
-      <button 
+      <button
         onClick={fetchDonationHistory}
         className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
       >
@@ -151,8 +183,8 @@ const DonationHistoryPage = () => {
       <p className="text-sm text-gray-600 text-center mb-5">
         Donasi sekarang untuk membantu yang membutuhkan
       </p>
-      <button 
-        onClick={() => window.location.href = '/donation-options'}
+      <button
+        onClick={() => (window.location.href = "/donation-options")}
         className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
       >
         <Heart size={16} />
@@ -170,26 +202,38 @@ const DonationHistoryPage = () => {
         <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-xl font-bold">Detail Donasi</h2>
-            <button 
+            <button
               onClick={() => setShowDetailModal(false)}
               className="p-1 hover:bg-gray-100 rounded-full"
             >
               <X size={20} />
             </button>
           </div>
-          
+
           <div className="space-y-4">
-            <DetailRow label="Panti Asuhan" value={selectedDonation.panti?.name || 'N/A'} />
-            <DetailRow 
-              label="Barang" 
-              value={`${selectedDonation.amount} ${selectedDonation.item_name}`} 
+            <DetailRow
+              label="Panti Asuhan"
+              value={selectedDonation.panti?.name || "N/A"}
             />
-            <DetailRow label="Tanggal" value={formatDate(selectedDonation.created_at)} />
-            <DetailRow label="Status" value={getStatusText(selectedDonation.status)} />
-            <DetailRow label="Pesan" value={selectedDonation.message || 'Tidak ada pesan'} />
+            <DetailRow
+              label="Barang"
+              value={`${selectedDonation.amount} ${selectedDonation.item_name}`}
+            />
+            <DetailRow
+              label="Tanggal"
+              value={formatDate(selectedDonation.created_at)}
+            />
+            <DetailRow
+              label="Status"
+              value={getStatusText(selectedDonation.status)}
+            />
+            <DetailRow
+              label="Pesan"
+              value={selectedDonation.message || "Tidak ada pesan"}
+            />
           </div>
-          
-          <button 
+
+          <button
             onClick={() => setShowDetailModal(false)}
             className="w-full mt-6 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors"
           >
@@ -214,7 +258,9 @@ const DonationHistoryPage = () => {
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white shadow-sm">
           <div className="max-w-lg mx-auto px-4 py-4">
-            <h1 className="text-lg font-semibold text-center">Riwayat Donasi</h1>
+            <h1 className="text-lg font-semibold text-center">
+              Riwayat Donasi
+            </h1>
           </div>
         </div>
         <div className="flex items-center justify-center h-64">
@@ -239,7 +285,7 @@ const DonationHistoryPage = () => {
           <div className="p-6 pb-4">
             <h2 className="text-lg font-bold text-gray-800">Riwayat Donasi</h2>
           </div>
-          
+
           {error ? (
             <ErrorState />
           ) : donationHistory.length === 0 ? (
@@ -248,7 +294,7 @@ const DonationHistoryPage = () => {
             <div className="pb-4">
               {donationHistory.map((donation, index) => (
                 <div key={donation.id}>
-                  <div 
+                  <div
                     onClick={() => showDonationDetails(donation)}
                     className="flex items-start p-6 hover:bg-gray-50 cursor-pointer transition-colors"
                   >
@@ -256,31 +302,35 @@ const DonationHistoryPage = () => {
                     <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center mr-4">
                       <Package className="text-amber-500" size={24} />
                     </div>
-                    
+
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-base truncate">
-                        {donation.panti?.name || 'Unknown Panti'}
+                        {donation.panti?.name || "Unknown Panti"}
                       </h3>
                       <p className="text-sm text-gray-700 mt-1">
                         {donation.amount} {donation.item_name}
                       </p>
-                      
+
                       <div className="flex items-center mt-2 gap-3">
                         <div className="flex items-center text-xs text-gray-500">
                           <Calendar size={12} className="mr-1" />
                           {formatDate(donation.created_at)}
                         </div>
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(donation.status)}`}>
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                            donation.status
+                          )}`}
+                        >
                           {getStatusText(donation.status)}
                         </span>
                       </div>
                     </div>
-                    
+
                     {/* Arrow */}
                     <ChevronRight className="text-gray-400 ml-2" size={20} />
                   </div>
-                  
+
                   {/* Divider */}
                   {index < donationHistory.length - 1 && (
                     <div className="mx-6 border-t border-gray-200"></div>
