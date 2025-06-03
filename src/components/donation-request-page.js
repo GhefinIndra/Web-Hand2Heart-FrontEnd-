@@ -327,17 +327,6 @@ const DonationRequestPage = () => {
             </p>
           </div>
 
-          {/* Back Button */}
-          <div className="mb-6">
-            <button
-              onClick={() => navigate(-1)}
-              className="flex items-center text-blue-600 hover:text-blue-800 transition"
-            >
-              <ArrowLeft className="h-5 w-5 mr-2" />
-              Kembali
-            </button>
-          </div>
-
           {/* Donation Cards */}
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {donations.map((orphanage) => (

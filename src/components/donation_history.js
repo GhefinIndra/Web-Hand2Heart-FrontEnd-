@@ -7,6 +7,7 @@ import {
   X,
   Gift,
   AlertCircle,
+  ArrowLeft,
 } from "lucide-react";
 
 const DonationHistoryPage = () => {
@@ -158,6 +159,10 @@ const DonationHistoryPage = () => {
     setShowDetailModal(true);
   };
 
+  const handleBackClick = () => {
+    window.location.href = "/profile";
+  };
+
   // Error State Component
   const ErrorState = () => (
     <div className="mx-4 my-5 p-5 bg-red-50 rounded-2xl">
@@ -184,7 +189,7 @@ const DonationHistoryPage = () => {
         Donasi sekarang untuk membantu yang membutuhkan
       </p>
       <button
-        onClick={() => (window.location.href = "/donation-options")}
+        onClick={() => (window.location.href = "/donasi")}
         className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
       >
         <Heart size={16} />
@@ -258,9 +263,17 @@ const DonationHistoryPage = () => {
       <div className="min-h-screen bg-gray-50">
         <div className="bg-white shadow-sm">
           <div className="max-w-lg mx-auto px-4 py-4">
-            <h1 className="text-lg font-semibold text-center">
-              Riwayat Donasi
-            </h1>
+            <div className="flex items-center">
+              <button
+                onClick={handleBackClick}
+                className="p-2 hover:bg-gray-100 rounded-full mr-2"
+              >
+                <ArrowLeft size={20} className="text-gray-600" />
+              </button>
+              <h1 className="text-lg font-semibold flex-1 text-center mr-10">
+                Riwayat Donasi
+              </h1>
+            </div>
           </div>
         </div>
         <div className="flex items-center justify-center h-64">
@@ -275,7 +288,17 @@ const DonationHistoryPage = () => {
       {/* Header */}
       <div className="bg-white shadow-sm">
         <div className="max-w-lg mx-auto px-4 py-4">
-          <h1 className="text-lg font-semibold text-center">Riwayat Donasi</h1>
+          <div className="flex items-center">
+            <button
+              onClick={handleBackClick}
+              className="p-2 hover:bg-gray-100 rounded-full mr-2 transition-colors"
+            >
+              <ArrowLeft size={20} className="text-gray-600" />
+            </button>
+            <h1 className="text-lg font-semibold flex-1 text-center mr-10">
+              Riwayat Donasi
+            </h1>
+          </div>
         </div>
       </div>
 
