@@ -8,6 +8,13 @@ import {
   Gift,
   AlertCircle,
   ArrowLeft,
+  MapPin,
+  Clock,
+  MessageCircle,
+  Check,
+  Hourglass,
+  XCircle,
+  Sparkles,
 } from "lucide-react";
 
 const DonationHistoryPage = () => {
@@ -128,16 +135,32 @@ const DonationHistoryPage = () => {
     });
   };
 
-  const getStatusColor = (status) => {
+  const getStatusConfig = (status) => {
     switch (status) {
       case "approved":
-        return "text-green-600 bg-green-50";
+        return {
+          color: "text-emerald-700 bg-emerald-100 border-emerald-200",
+          icon: Check,
+          gradient: "from-emerald-50 to-emerald-100"
+        };
       case "pending":
-        return "text-yellow-600 bg-yellow-50";
+        return {
+          color: "text-amber-700 bg-amber-100 border-amber-200",
+          icon: Hourglass,
+          gradient: "from-amber-50 to-amber-100"
+        };
       case "rejected":
-        return "text-red-600 bg-red-50";
+        return {
+          color: "text-red-700 bg-red-100 border-red-200",
+          icon: XCircle,
+          gradient: "from-red-50 to-red-100"
+        };
       default:
-        return "text-gray-600 bg-gray-50";
+        return {
+          color: "text-gray-700 bg-gray-100 border-gray-200",
+          icon: Clock,
+          gradient: "from-gray-50 to-gray-100"
+        };
     }
   };
 
@@ -165,15 +188,17 @@ const DonationHistoryPage = () => {
 
   // Error State Component
   const ErrorState = () => (
-    <div className="mx-4 my-5 p-5 bg-red-50 rounded-2xl">
-      <div className="flex items-center mb-3">
-        <AlertCircle size={20} className="text-red-500 mr-2" />
-        <h3 className="text-lg font-bold text-red-700">Error</h3>
+    <div className="mx-4 my-6 p-6 bg-gradient-to-br from-red-50 to-red-100 rounded-3xl border border-red-200 shadow-sm">
+      <div className="flex items-center mb-4">
+        <div className="w-10 h-10 bg-red-200 rounded-xl flex items-center justify-center mr-3">
+          <AlertCircle size={20} className="text-red-600" />
+        </div>
+        <h3 className="text-lg font-bold text-red-800">Terjadi Kesalahan</h3>
       </div>
-      <p className="text-sm text-red-600 mb-4">{error}</p>
+      <p className="text-sm text-red-700 mb-5 leading-relaxed">{error}</p>
       <button
         onClick={fetchDonationHistory}
-        className="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors"
+        className="bg-gradient-to-r from-red-600 to-red-700 text-white px-6 py-3 rounded-xl hover:from-red-700 hover:to-red-800 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
       >
         Coba Lagi
       </button>
@@ -182,18 +207,20 @@ const DonationHistoryPage = () => {
 
   // Empty State Component
   const EmptyDonationHistory = () => (
-    <div className="mx-4 my-5 p-5 bg-gray-50 rounded-2xl flex flex-col items-center">
-      <Gift size={60} className="text-gray-300 mb-4" />
-      <h3 className="text-lg font-bold mb-2">Belum Ada Riwayat Donasi</h3>
-      <p className="text-sm text-gray-600 text-center mb-5">
-        Donasi sekarang untuk membantu yang membutuhkan
+    <div className="mx-4 my-6 p-8 bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 rounded-3xl flex flex-col items-center border border-blue-100 shadow-sm">
+      <div className="w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mb-6 shadow-sm">
+        <Gift size={32} className="text-blue-600" />
+      </div>
+      <h3 className="text-xl font-bold mb-3 text-gray-800">Belum Ada Riwayat Donasi</h3>
+      <p className="text-sm text-gray-600 text-center mb-6 leading-relaxed max-w-xs">
+        Mulai berbagi kebaikan dengan berdonasi untuk membantu yang membutuhkan
       </p>
       <button
         onClick={() => (window.location.href = "/donasi")}
-        className="flex items-center gap-2 bg-blue-600 text-white px-6 py-3 rounded-xl hover:bg-blue-700 transition-colors"
+        className="flex items-center gap-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
       >
-        <Heart size={16} />
-        Donasi Sekarang
+        <Heart size={18} />
+        <span className="font-semibold">Donasi Sekarang</span>
       </button>
     </div>
   );
@@ -202,37 +229,50 @@ const DonationHistoryPage = () => {
   const DonationDetailModal = () => {
     if (!showDetailModal || !selectedDonation) return null;
 
+    const statusConfig = getStatusConfig(selectedDonation.status);
+    const StatusIcon = statusConfig.icon;
+
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-        <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-bold">Detail Donasi</h2>
+      <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center p-4 z-50 backdrop-blur-sm">
+        <div className="bg-white rounded-3xl p-8 w-full max-w-md shadow-2xl border border-gray-100">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-gray-800">Detail Donasi</h2>
             <button
               onClick={() => setShowDetailModal(false)}
-              className="p-1 hover:bg-gray-100 rounded-full"
+              className="p-2 hover:bg-gray-100 rounded-xl transition-colors"
             >
-              <X size={20} />
+              <X size={20} className="text-gray-600" />
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             <DetailRow
+              icon={<Package size={16} className="text-blue-600" />}
               label="Panti Asuhan"
               value={selectedDonation.panti?.name || "N/A"}
             />
             <DetailRow
+              icon={<Gift size={16} className="text-purple-600" />}
               label="Barang"
               value={`${selectedDonation.amount} ${selectedDonation.item_name}`}
             />
             <DetailRow
+              icon={<Calendar size={16} className="text-green-600" />}
               label="Tanggal"
               value={formatDate(selectedDonation.created_at)}
             />
             <DetailRow
+              icon={<StatusIcon size={16} className={statusConfig.color.split(' ')[0]} />}
               label="Status"
               value={getStatusText(selectedDonation.status)}
+              badge={
+                <span className={`px-3 py-1 rounded-xl text-xs font-semibold border ${statusConfig.color}`}>
+                  {getStatusText(selectedDonation.status)}
+                </span>
+              }
             />
             <DetailRow
+              icon={<MessageCircle size={16} className="text-orange-600" />}
               label="Pesan"
               value={selectedDonation.message || "Tidak ada pesan"}
             />
@@ -240,7 +280,7 @@ const DonationHistoryPage = () => {
 
           <button
             onClick={() => setShowDetailModal(false)}
-            className="w-full mt-6 bg-blue-600 text-white py-3 rounded-xl hover:bg-blue-700 transition-colors"
+            className="w-full mt-8 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-4 rounded-2xl hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 font-semibold"
           >
             Tutup
           </button>
@@ -250,52 +290,66 @@ const DonationHistoryPage = () => {
   };
 
   // Detail Row Component
-  const DetailRow = ({ label, value }) => (
-    <div className="flex py-2">
-      <div className="w-24 text-sm text-gray-600">{label}</div>
-      <div className="ml-2 flex-1 text-sm font-medium">{value}</div>
+  const DetailRow = ({ icon, label, value, badge }) => (
+    <div className="flex items-start py-3 px-4 bg-gray-50 rounded-2xl">
+      <div className="w-8 h-8 flex items-center justify-center mr-4 mt-0.5">
+        {icon}
+      </div>
+      <div className="flex-1">
+        <div className="text-sm font-medium text-gray-600 mb-1">{label}</div>
+        <div className="flex items-center justify-between">
+          <div className="text-sm font-semibold text-gray-800 leading-relaxed">{value}</div>
+          {badge && badge}
+        </div>
+      </div>
     </div>
   );
 
   // Loading State
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <div className="bg-white shadow-sm">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-100">
           <div className="max-w-lg mx-auto px-4 py-4">
             <div className="flex items-center">
               <button
                 onClick={handleBackClick}
-                className="p-2 hover:bg-gray-100 rounded-full mr-2"
+                className="p-3 hover:bg-gray-100 rounded-xl mr-3 transition-colors"
               >
                 <ArrowLeft size={20} className="text-gray-600" />
               </button>
-              <h1 className="text-lg font-semibold flex-1 text-center mr-10">
+              <h1 className="text-xl font-bold flex-1 text-center mr-12 text-gray-800">
                 Riwayat Donasi
               </h1>
             </div>
           </div>
         </div>
         <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div className="relative">
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-600 border-t-transparent absolute top-0"></div>
+          </div>
         </div>
       </div>
     );
   }
 
+  const totalDonations = donationHistory.length;
+  const approvedDonations = donationHistory.filter(d => d.status === 'approved').length;
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Header */}
-      <div className="bg-white shadow-sm">
+      <div className="bg-white/80 backdrop-blur-sm shadow-sm border-b border-gray-100 sticky top-0 z-40">
         <div className="max-w-lg mx-auto px-4 py-4">
           <div className="flex items-center">
             <button
               onClick={handleBackClick}
-              className="p-2 hover:bg-gray-100 rounded-full mr-2 transition-colors"
+              className="p-3 hover:bg-gray-100 rounded-xl mr-3 transition-colors"
             >
               <ArrowLeft size={20} className="text-gray-600" />
             </button>
-            <h1 className="text-lg font-semibold flex-1 text-center mr-10">
+            <h1 className="text-xl font-bold flex-1 text-center mr-12 text-gray-800">
               Riwayat Donasi
             </h1>
           </div>
@@ -304,9 +358,29 @@ const DonationHistoryPage = () => {
 
       {/* Content */}
       <div className="max-w-lg mx-auto p-4">
-        <div className="bg-white rounded-2xl shadow-sm">
-          <div className="p-6 pb-4">
-            <h2 className="text-lg font-bold text-gray-800">Riwayat Donasi</h2>
+        {/* Stats Card */}
+        {!error && totalDonations > 0 && (
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-3xl p-6 mb-6 text-white shadow-xl">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-sm font-medium opacity-90 mb-1">Total Donasi</h3>
+                <p className="text-3xl font-bold">{totalDonations}</p>
+              </div>
+              <div className="text-right">
+                <h3 className="text-sm font-medium opacity-90 mb-1">Disetujui</h3>
+                <p className="text-3xl font-bold">{approvedDonations}</p>
+              </div>
+              <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
+                <Sparkles size={28} />
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+          <div className="p-6 pb-4 border-b border-gray-100">
+            <h2 className="text-xl font-bold text-gray-800">Riwayat Donasi Anda</h2>
+            <p className="text-sm text-gray-600 mt-1">Lihat semua donasi yang telah Anda berikan</p>
           </div>
 
           {error ? (
@@ -315,51 +389,59 @@ const DonationHistoryPage = () => {
             <EmptyDonationHistory />
           ) : (
             <div className="pb-4">
-              {donationHistory.map((donation, index) => (
-                <div key={donation.id}>
-                  <div
-                    onClick={() => showDonationDetails(donation)}
-                    className="flex items-start p-6 hover:bg-gray-50 cursor-pointer transition-colors"
-                  >
-                    {/* Icon */}
-                    <div className="w-12 h-12 bg-amber-50 rounded-xl flex items-center justify-center mr-4">
-                      <Package className="text-amber-500" size={24} />
-                    </div>
+              {donationHistory.map((donation, index) => {
+                const statusConfig = getStatusConfig(donation.status);
+                const StatusIcon = statusConfig.icon;
+                
+                return (
+                  <div key={donation.id}>
+                    <div
+                      onClick={() => showDonationDetails(donation)}
+                      className="flex items-start p-6 hover:bg-gradient-to-r hover:from-blue-50 hover:to-purple-50 cursor-pointer transition-all duration-200 group"
+                    >
+                      {/* Icon */}
+                      <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-purple-100 rounded-2xl flex items-center justify-center mr-4 shadow-sm group-hover:shadow-md transition-shadow">
+                        <Package className="text-blue-600" size={24} />
+                      </div>
 
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-base truncate">
-                        {donation.panti?.name || "Unknown Panti"}
-                      </h3>
-                      <p className="text-sm text-gray-700 mt-1">
-                        {donation.amount} {donation.item_name}
-                      </p>
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between mb-2">
+                          <h3 className="font-bold text-base text-gray-800 truncate pr-2">
+                            {donation.panti?.name || "Unknown Panti"}
+                          </h3>
+                          <span className={`px-3 py-1 rounded-xl text-xs font-semibold border flex items-center gap-1 ${statusConfig.color} shrink-0`}>
+                            <StatusIcon size={12} />
+                            {getStatusText(donation.status)}
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 mb-3">
+                          <MapPin size={12} className="text-gray-400" />
+                          <span className="text-sm text-gray-600">{donation.panti?.kota}</span>
+                        </div>
 
-                      <div className="flex items-center mt-2 gap-3">
+                        <p className="text-sm font-semibold text-gray-700 mb-3">
+                          {donation.amount} {donation.item_name}
+                        </p>
+
                         <div className="flex items-center text-xs text-gray-500">
                           <Calendar size={12} className="mr-1" />
                           {formatDate(donation.created_at)}
                         </div>
-                        <span
-                          className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(
-                            donation.status
-                          )}`}
-                        >
-                          {getStatusText(donation.status)}
-                        </span>
                       </div>
+
+                      {/* Arrow */}
+                      <ChevronRight className="text-gray-400 ml-2 group-hover:text-gray-600 transition-colors" size={20} />
                     </div>
 
-                    {/* Arrow */}
-                    <ChevronRight className="text-gray-400 ml-2" size={20} />
+                    {/* Divider */}
+                    {index < donationHistory.length - 1 && (
+                      <div className="mx-6 border-t border-gray-100"></div>
+                    )}
                   </div>
-
-                  {/* Divider */}
-                  {index < donationHistory.length - 1 && (
-                    <div className="mx-6 border-t border-gray-200"></div>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

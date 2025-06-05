@@ -7,8 +7,44 @@ const Hand2HeartLogo = () => {
   const navigate = useNavigate();
 
   const handleLogoClick = () => {
-    localStorage.removeItem("isLoggedIn");
-    navigate("/about");
+    // Debug: Check all localStorage data
+    console.log("=== DEBUG LOGO CLICK ===");
+    console.log("token:", localStorage.getItem("token"));
+    console.log("user raw:", localStorage.getItem("user"));
+    
+    // Check if user is logged in (check if token exists)
+    const token = localStorage.getItem("token");
+    const userString = localStorage.getItem("user");
+    
+    if (!token || !userString) {
+      console.log("User not logged in (no token or user), redirecting to about");
+      navigate("/about");
+      return;
+    }
+
+    // Get user data from localStorage
+    try {
+      const userData = JSON.parse(userString);
+      console.log("Parsed userData:", userData);
+      
+      const userRole = userData.role;
+      console.log("User role:", userRole);
+
+      // Redirect based on user role
+      if (userRole === "pj_panti") {
+        console.log("Redirecting to /adminpanti");
+        navigate("/adminpanti");
+      } else if (userRole === "donatur") {
+        console.log("Redirecting to /donasi");
+        navigate("/donasi");
+      } else {
+        console.log("No valid role found, redirecting to about. Role was:", userRole);
+        navigate("/about");
+      }
+    } catch (error) {
+      console.error("Error parsing user data:", error);
+      navigate("/about");
+    }
   };
 
   return (
@@ -47,8 +83,21 @@ const Navbar = ({ isAdmin }) => {
   const profileMenuRef = useRef(null);
 
   const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    navigate("/");
+    // Clear all user-related data from localStorage (using correct keys)
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    localStorage.removeItem("isLoggedIn"); // Keep this for backward compatibility
+    localStorage.removeItem("userData"); // Keep this for backward compatibility
+    localStorage.removeItem("userToken"); // Keep this for backward compatibility
+    
+    // Close profile menu
+    setIsProfileMenuOpen(false);
+    
+    // Small delay to ensure localStorage is cleared
+    setTimeout(() => {
+      // Force page refresh to ensure all state is cleared
+      window.location.href = "/";
+    }, 100);
   };
 
   // Check if current page is restricted for "Donasikan" and "Tentang Kami"

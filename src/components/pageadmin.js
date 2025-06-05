@@ -1,8 +1,145 @@
 import React, { useState, useEffect } from "react";
-import { Home, Users, DollarSign, Plus, ArrowRight, Edit, Trash2, Building2, MapPin, Phone, FileText, AlertTriangle, X } from "lucide-react";
+import { Home, Users, DollarSign, Plus, ArrowRight, Edit, Trash2, Building2, MapPin, Phone, FileText, AlertTriangle, X, Heart, Check } from "lucide-react";
 import Navbar from "./Navbar";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
+
+const Toast = ({ message, type = 'success', isVisible, onClose }) => {
+  const [shouldShow, setShouldShow] = useState(false);
+
+  useEffect(() => {
+    if (isVisible && message) {
+      // Small delay to ensure proper mounting
+      const showTimer = setTimeout(() => {
+        setShouldShow(true);
+      }, 10);
+      
+      // Auto-hide timer
+      const hideTimer = setTimeout(() => {
+        setShouldShow(false);
+        setTimeout(() => {
+          onClose();
+        }, 300);
+      }, 3000);
+      
+      return () => {
+        clearTimeout(showTimer);
+        clearTimeout(hideTimer);
+      };
+    } else {
+      setShouldShow(false);
+    }
+  }, [isVisible, message, onClose]);
+
+  // Don't render if no message
+  if (!message) {
+    return null;
+  }
+
+  return (
+    <div className={`fixed top-4 right-4 z-50 transition-all duration-300 ${
+      isVisible && shouldShow ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-full'
+    }`}>
+      <div className={`
+        flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg max-w-sm
+        ${type === 'success' 
+          ? 'bg-green-500 text-white' 
+          : type === 'error' 
+          ? 'bg-red-500 text-white' 
+          : 'bg-blue-500 text-white'
+        }
+      `}>
+        {type === 'success' && <Check className="h-5 w-5 flex-shrink-0" />}
+        {type === 'error' && <X className="h-5 w-5 flex-shrink-0" />}
+        <span className="text-sm font-medium">{message}</span>
+        <button
+          onClick={() => {
+            setShouldShow(false);
+            setTimeout(() => onClose(), 300);
+          }}
+          className="ml-2 hover:opacity-80 transition-opacity"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+const EditModal = ({ editingPanti, editForm, setEditForm, onClose, onSave }) => {
+  if (!editingPanti) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+      <div className="bg-white rounded-lg p-6 w-96 max-w-90vw">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-semibold">Edit Panti Asuhan</h3>
+          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Panti</label>
+            <input
+              type="text"
+              value={editForm.namaPanti}
+              onChange={(e) => setEditForm(prev => ({...prev, namaPanti: e.target.value}))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              autoFocus
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kota</label>
+            <input
+              type="text"
+              value={editForm.kota}
+              onChange={(e) => setEditForm(prev => ({...prev, kota: e.target.value}))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Kontak</label>
+            <input
+              type="text"
+              value={editForm.kontak}
+              onChange={(e) => setEditForm(prev => ({...prev, kontak: e.target.value}))}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
+            <textarea
+              value={editForm.deskripsi}
+              onChange={(e) => setEditForm(prev => ({...prev, deskripsi: e.target.value}))}
+              rows="3"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+        </div>
+        
+        <div className="flex justify-end space-x-3 mt-6">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
+          >
+            Batal
+          </button>
+          <button
+            onClick={onSave}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            Simpan
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 const DashboardHome = () => {
   const navigate = useNavigate();
@@ -17,10 +154,56 @@ const DashboardHome = () => {
     kontak: '',
     deskripsi: ''
   });
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success'
+  });
+
+const showToast = (message, type = 'success') => {
+  console.log('showToast called with:', message, type);
+  
+  // Clear any existing toast first
+    setToast({
+      isVisible: false,
+      message: '',
+      type: 'success'
+    });
+    
+    // Use setTimeout to ensure state update happens after clearing
+    setTimeout(() => {
+      setToast({
+        isVisible: true,
+        message,
+        type
+      });
+    }, 50); // Small delay to ensure state is cleared first
+  };
+
+const hideToast = () => {
+  setToast(prev => ({
+    ...prev,
+    isVisible: false
+  }));
+  
+  // Clear the message after animation completes
+  setTimeout(() => {
+    setToast({
+      isVisible: false,
+      message: '',
+      type: 'success'
+    });
+  }, 300);
+};
 
   useEffect(() => {
     fetchPanti();
   }, []);
+
+  // Debug: Monitor toast state changes
+  useEffect(() => {
+    console.log('Toast state changed:', toast);
+  }, [toast]);
 
   const fetchPanti = async () => {
     setIsLoading(true);
@@ -141,17 +324,21 @@ const DashboardHome = () => {
 
   const handleUpdatePanti = async () => {
     try {
+      console.log('Starting update process...'); // Debug log
+      
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
       
       if (!token || !userStr) {
-        alert('Please login first');
+        showToast('Please login first', 'error');
         navigate('/login');
         return;
       }
 
       const user = JSON.parse(userStr);
       const userEmail = user?.email || user?.user?.email || user?.username;
+
+      console.log('Sending update request...', editForm); // Debug log
 
       const response = await axios.put(
         `http://127.0.0.1:8000/api/panti/${editingPanti.id}`,
@@ -165,36 +352,45 @@ const DashboardHome = () => {
         }
       );
 
-      if (response.data.success) {
-        alert('Panti berhasil diperbarui!');
+      console.log('Update response:', response.data); // Debug log
+
+      console.log('Response data:', response.data); // Debug log
+      console.log('Response success value:', response.data.success, typeof response.data.success); // Debug log
+      
+      if (response.data.success === true || response.data.success === 'true') {
+        console.log('Update successful, showing toast...'); // Debug log
+        showToast('Panti berhasil diperbarui! 🎉', 'success');
         setEditingPanti(null);
-        fetchPanti(); // Refresh the list
+        await fetchPanti(); // Refresh the list
       } else {
+        console.log('Update failed, response.data.success is:', response.data.success); // Debug log
         throw new Error(response.data.message || 'Failed to update panti');
       }
     } catch (error) {
       console.error("Error updating panti:", error);
-      if (error.response) {
-        alert(`Error: ${error.response.data.message || 'Failed to update panti'}`);
-      } else {
-        alert("Failed to connect to server. Please check your connection.");
-      }
+      const errorMessage = error.response?.data?.message || 'Gagal memperbarui panti';
+      console.log('Showing error toast:', errorMessage); // Debug log
+      showToast(errorMessage, 'error');
     }
   };
 
   const handleDeletePanti = async (pantiId) => {
     try {
+      console.log('Starting delete process for ID:', pantiId); // Debug log
+      
       const token = localStorage.getItem('token');
       const userStr = localStorage.getItem('user');
       
       if (!token || !userStr) {
-        alert('Please login first');
+        showToast('Please login first', 'error');
         navigate('/login');
         return;
       }
 
       const user = JSON.parse(userStr);
       const userEmail = user?.email || user?.user?.email || user?.username;
+
+      console.log('Sending delete request...'); // Debug log
 
       const response = await axios.delete(
         `http://127.0.0.1:8000/api/panti/${pantiId}`,
@@ -207,23 +403,28 @@ const DashboardHome = () => {
         }
       );
 
-      if (response.data.success) {
-        alert('Panti berhasil dihapus!');
+      console.log('Delete response:', response.data); // Debug log
+
+      console.log('Response data:', response.data); // Debug log
+      console.log('Response success value:', response.data.success, typeof response.data.success); // Debug log
+
+      if (response.data.success === true || response.data.success === 'true') {
+        console.log('Delete successful, showing toast...'); // Debug log
+        showToast('Panti berhasil dihapus! ✅', 'success');
         setDeleteConfirm(null);
         if (selectedPanti && selectedPanti.id === pantiId) {
           setSelectedPanti(null);
         }
-        fetchPanti(); // Refresh the list
+        await fetchPanti(); // Refresh the list
       } else {
+        console.log('Delete failed, response.data.success is:', response.data.success); // Debug log
         throw new Error(response.data.message || 'Failed to delete panti');
       }
     } catch (error) {
       console.error("Error deleting panti:", error);
-      if (error.response) {
-        alert(`Error: ${error.response.data.message || 'Failed to delete panti'}`);
-      } else {
-        alert("Failed to connect to server. Please check your connection.");
-      }
+      const errorMessage = error.response?.data?.message || 'Gagal menghapus panti';
+      console.log('Showing error toast:', errorMessage); // Debug log
+      showToast(errorMessage, 'error');
     }
   };
 
@@ -239,76 +440,9 @@ const DashboardHome = () => {
     setSelectedPanti(orphanage);
   };
 
-  // Edit Modal
-  const EditModal = () => (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-96 max-w-90vw">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-semibold">Edit Panti Asuhan</h3>
-          <button onClick={() => setEditingPanti(null)} className="text-gray-500 hover:text-gray-700">
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-        
-        <div className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Nama Panti</label>
-            <input
-              type="text"
-              value={editForm.namaPanti}
-              onChange={(e) => setEditForm({...editForm, namaPanti: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Kota</label>
-            <input
-              type="text"
-              value={editForm.kota}
-              onChange={(e) => setEditForm({...editForm, kota: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Kontak</label>
-            <input
-              type="text"
-              value={editForm.kontak}
-              onChange={(e) => setEditForm({...editForm, kontak: e.target.value})}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Deskripsi</label>
-            <textarea
-              value={editForm.deskripsi}
-              onChange={(e) => setEditForm({...editForm, deskripsi: e.target.value})}
-              rows="3"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-        
-        <div className="flex justify-end space-x-3 mt-6">
-          <button
-            onClick={() => setEditingPanti(null)}
-            className="px-4 py-2 text-gray-600 bg-gray-100 rounded-lg hover:bg-gray-200"
-          >
-            Batal
-          </button>
-          <button
-            onClick={handleUpdatePanti}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
-          >
-            Simpan
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+  const handleNavigateToDonasiMasuk = () => {
+    navigate('/donasi-masuk');
+  };
 
   // Delete Confirmation Modal
   const DeleteModal = () => (
@@ -344,9 +478,16 @@ const DashboardHome = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Toast 
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
       {/* Navbar for Admin */}
       <Navbar isAdmin={true} />
 
+    
       <div className="pt-16">
         <div className="container mx-auto px-4 py-8">
           <div className="mb-8">
@@ -500,13 +641,31 @@ const DashboardHome = () => {
                     <div>
                       <h3 className="text-xl font-semibold flex items-center gap-2">
                         <DollarSign className="h-5 w-5" />
-                        Kelola Donasi
+                        Kebutuhan Panti
                       </h3>
                       <p className="mt-2 text-purple-100">
                         {selectedPanti 
-                          ? `Atur donasi ${selectedPanti.namaPanti}`
+                          ? `Atur kebutuhan ${selectedPanti.namaPanti}`
                           : "Pilih panti terlebih dahulu"
                         }
+                      </p>
+                    </div>
+                    <ArrowRight className="h-6 w-6" />
+                  </div>
+                </button>
+
+                <button
+                  onClick={handleNavigateToDonasiMasuk}
+                  className="w-full bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-sm hover:shadow-lg transition-all duration-200 cursor-pointer p-6 transform hover:scale-105"
+                >
+                  <div className="flex items-center justify-between text-white">
+                    <div>
+                      <h3 className="text-xl font-semibold flex items-center gap-2">
+                        <Heart className="h-5 w-5" />
+                        Kelola Donasi Masuk
+                      </h3>
+                      <p className="mt-2 text-green-100">
+                        Lihat dan kelola donasi yang masuk
                       </p>
                     </div>
                     <ArrowRight className="h-6 w-6" />
@@ -517,11 +676,37 @@ const DashboardHome = () => {
           </div>
         </div>
       </div>
-
-      {/* Modals */}
-      {editingPanti && <EditModal />}
+      
+      {editingPanti && (
+        <EditModal
+          editingPanti={editingPanti}
+          editForm={editForm}
+          setEditForm={setEditForm}
+          onClose={() => setEditingPanti(null)}
+          onSave={handleUpdatePanti}
+        />
+      )}
       {deleteConfirm && <DeleteModal />}
-    </div>
+
+      {/* CSS Style */}
+      <style jsx>{`
+        @keyframes slide-in {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        
+        .animate-slide-in {
+          animation: slide-in 0.3s ease-out;
+        }
+      `}</style>
+
+    </div> 
   );
 };
 

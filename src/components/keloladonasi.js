@@ -8,10 +8,53 @@ import {
   X, 
   ArrowLeft,
   Package,
-  AlertCircle
+  AlertCircle,
+  Check
 } from 'lucide-react';
 import axios from 'axios';
 import Navbar from './Navbar';
+
+// Toast Notification Component
+const Toast = ({ message, type = 'success', isVisible, onClose }) => {
+  useEffect(() => {
+    if (isVisible) {
+      const timer = setTimeout(() => {
+        onClose();
+      }, 3000); // Auto close after 3 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible, onClose]);
+
+  if (!isVisible) return null;
+
+  return (
+    <div className="fixed top-4 right-4 z-50 animate-slide-in">
+      <div className={`
+        flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg max-w-sm
+        ${type === 'success' 
+          ? 'bg-green-500 text-white' 
+          : type === 'error' 
+          ? 'bg-red-500 text-white' 
+          : type === 'warning'
+          ? 'bg-yellow-500 text-white'
+          : 'bg-blue-500 text-white'
+        }
+      `}>
+        {type === 'success' && <Check className="h-5 w-5 flex-shrink-0" />}
+        {type === 'error' && <X className="h-5 w-5 flex-shrink-0" />}
+        {type === 'warning' && <AlertCircle className="h-5 w-5 flex-shrink-0" />}
+        <span className="text-sm font-medium">{message}</span>
+        <button
+          onClick={onClose}
+          className="ml-2 hover:opacity-80 transition-opacity"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const KeloladonasiPage = () => {
   const { pantiId } = useParams();
@@ -33,6 +76,25 @@ const KeloladonasiPage = () => {
   });
 
   const [errors, setErrors] = useState({});
+
+  // Toast state
+  const [toast, setToast] = useState({
+    isVisible: false,
+    message: '',
+    type: 'success'
+  });
+
+  const showToast = (message, type = 'success') => {
+    setToast({
+      isVisible: true,
+      message,
+      type
+    });
+  };
+
+  const hideToast = () => {
+    setToast(prev => ({ ...prev, isVisible: false }));
+  };
 
   // Helper function to get auth headers
   const getAuthHeaders = () => {
@@ -76,7 +138,7 @@ const KeloladonasiPage = () => {
     try {
       const headers = getAuthHeaders();
       if (!headers) {
-        alert('Please login first');
+        showToast('Silakan login terlebih dahulu', 'error');
         navigate('/login');
         return;
       }
@@ -92,6 +154,7 @@ const KeloladonasiPage = () => {
       console.error('Error fetching panti info:', error);
       if (error.response?.status === 401) {
         localStorage.clear();
+        showToast('Sesi telah berakhir. Silakan login kembali', 'error');
         navigate('/login');
       }
     }
@@ -104,7 +167,7 @@ const KeloladonasiPage = () => {
       
       const headers = getAuthHeaders();
       if (!headers) {
-        alert('Please login first');
+        showToast('Silakan login terlebih dahulu', 'error');
         navigate('/login');
         return;
       }
@@ -129,13 +192,13 @@ const KeloladonasiPage = () => {
       if (error.response) {
         console.error("Error response:", error.response.data);
         if (error.response.status === 401) {
-          alert('Session expired. Please login again.');
+          showToast('Sesi telah berakhir. Silakan login kembali', 'error');
           localStorage.clear();
           navigate('/login');
           return;
         }
       } else {
-        alert("Failed to connect to server. Please check your connection.");
+        showToast('Gagal terhubung ke server. Periksa koneksi internet Anda', 'error');
       }
     } finally {
       setIsLoading(false);
@@ -169,7 +232,7 @@ const KeloladonasiPage = () => {
       
       const headers = getAuthHeaders();
       if (!headers) {
-        alert('Please login first');
+        showToast('Silakan login terlebih dahulu', 'error');
         navigate('/login');
         return;
       }
@@ -205,7 +268,10 @@ const KeloladonasiPage = () => {
       if (response.data.success) {
         fetchItems(); // Refresh data barang setelah disubmit
         resetForm();
-        alert(editingItem ? 'Barang berhasil diperbarui!' : 'Barang berhasil ditambahkan!');
+        showToast(
+          editingItem ? 'Barang berhasil diperbarui! 🎉' : 'Barang berhasil ditambahkan! 🎉', 
+          'success'
+        );
       } else {
         throw new Error(response.data.message || 'Failed to save barang');
       }
@@ -216,7 +282,7 @@ const KeloladonasiPage = () => {
         console.error('Error response:', error.response.data);
         
         if (error.response.status === 401) {
-          alert('Session expired. Please login again.');
+          showToast('Sesi telah berakhir. Silakan login kembali', 'error');
           localStorage.clear();
           navigate('/login');
           return;
@@ -229,13 +295,16 @@ const KeloladonasiPage = () => {
           // Show user-friendly error message
           const errorMessages = Object.values(validationErrors).flat();
           if (errorMessages.length > 0) {
-            alert(`Validation Error: ${errorMessages.join(', ')}`);
+            showToast(`Kesalahan validasi: ${errorMessages.join(', ')}`, 'error');
           }
         } else {
-          alert(`Error: ${error.response.data.message || 'Failed to save barang'}`);
+          showToast(
+            error.response.data.message || 'Gagal menyimpan barang', 
+            'error'
+          );
         }
       } else {
-        alert("Gagal terhubung ke server.");
+        showToast('Gagal terhubung ke server', 'error');
       }
     }
   };
@@ -253,7 +322,7 @@ const KeloladonasiPage = () => {
       
       const headers = getAuthHeaders();
       if (!headers) {
-        alert('Please login first');
+        showToast('Silakan login terlebih dahulu', 'error');
         navigate('/login');
         return;
       }
@@ -271,7 +340,7 @@ const KeloladonasiPage = () => {
         fetchItems(); // Refresh data barang setelah dihapus
         setShowDeleteConfirm(false);
         setItemToDelete(null);
-        alert('Barang berhasil dihapus!');
+        showToast('Barang berhasil dihapus! 🗑️', 'success');
       } else {
         throw new Error(response.data.message || 'Failed to delete barang');
       }
@@ -281,14 +350,17 @@ const KeloladonasiPage = () => {
       if (error.response) {
         console.error('Error response:', error.response.data);
         if (error.response.status === 401) {
-          alert('Session expired. Please login again.');
+          showToast('Sesi telah berakhir. Silakan login kembali', 'error');
           localStorage.clear();
           navigate('/login');
           return;
         }
-        alert(`Error: ${error.response.data.message || 'Failed to delete barang'}`);
+        showToast(
+          error.response.data.message || 'Gagal menghapus barang', 
+          'error'
+        );
       } else {
-        alert("Gagal terhubung ke server.");
+        showToast('Gagal terhubung ke server', 'error');
       }
     }
   };
@@ -352,6 +424,14 @@ const KeloladonasiPage = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Toast Notification */}
+      <Toast 
+        message={toast.message}
+        type={toast.type}
+        isVisible={toast.isVisible}
+        onClose={hideToast}
+      />
+      
       <Navbar isAdmin={true} />
       
       <div className="pt-16">
@@ -611,6 +691,23 @@ const KeloladonasiPage = () => {
           </div>
         </div>
       )}
+
+      <style jsx>{`
+        @keyframes slide-in {
+          from {
+            transform: translateX(100%);
+            opacity: 0;
+          }
+          to {
+            transform: translateX(0);
+            opacity: 1;
+          }
+        }
+        
+        .animate-slide-in {
+          animation: slide-in 0.3s ease-out;
+        }
+      `}</style>
     </div>
   );
 };
