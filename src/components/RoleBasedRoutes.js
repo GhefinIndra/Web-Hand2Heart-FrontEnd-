@@ -36,7 +36,7 @@ const RoleBasedRoutes = () => {
       <Route 
         path="/donasi" 
         element={
-          <ProtectedRoute allowedRoles={['donatur']} redirectPath="/login">
+          <ProtectedRoute allowedRoles={['donatur']} redirectPath="/adminpanti">
             <Donasi />
           </ProtectedRoute>
         } 
@@ -45,7 +45,7 @@ const RoleBasedRoutes = () => {
       <Route 
         path="/donation-history" 
         element={
-          <ProtectedRoute allowedRoles={['donatur']} redirectPath="/login">
+          <ProtectedRoute allowedRoles={['donatur']} redirectPath="/adminpanti">
             <DonationHistory />
           </ProtectedRoute>
         } 
@@ -55,7 +55,7 @@ const RoleBasedRoutes = () => {
       <Route 
         path="/adminpanti" 
         element={
-          <ProtectedRoute allowedRoles={['pj_panti']} redirectPath="/login">
+          <ProtectedRoute allowedRoles={['pj_panti']} redirectPath="/donasi">
             <AdminPanti />
           </ProtectedRoute>
         } 
@@ -64,7 +64,7 @@ const RoleBasedRoutes = () => {
       <Route 
         path="/admindonasi/:pantiId" 
         element={
-          <ProtectedRoute allowedRoles={['pj_panti']} redirectPath="/login">
+          <ProtectedRoute allowedRoles={['pj_panti']} redirectPath="/donasi">
             <AdminDonasi />
           </ProtectedRoute>
         } 
@@ -73,7 +73,7 @@ const RoleBasedRoutes = () => {
       <Route 
         path="/tambahpanti" 
         element={
-          <ProtectedRoute allowedRoles={['pj_panti']} redirectPath="/login">
+          <ProtectedRoute allowedRoles={['pj_panti']} redirectPath="/donasi">
             <TambahPanti />
           </ProtectedRoute>
         } 
@@ -82,7 +82,7 @@ const RoleBasedRoutes = () => {
       <Route 
         path="/donasi-masuk" 
         element={
-          <ProtectedRoute allowedRoles={['pj_panti']} redirectPath="/login">
+          <ProtectedRoute allowedRoles={['pj_panti']} redirectPath="/donasi">
             <DonasiMasuk />
           </ProtectedRoute>
         } 
