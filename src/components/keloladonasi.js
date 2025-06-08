@@ -529,7 +529,7 @@ const fetchItems = async () => {
                                 <p className="text-sm text-gray-500 mt-1">{item.deskripsi}</p>
                               )}
                               <p className="text-sm text-gray-500 mt-1">
-                                Jumlah: {item.jumlah} {item.satuan}
+                                Jumlah: {item.jumlah} {item.namaBarang}
                               </p>
                             </div>
                             
@@ -556,7 +556,7 @@ const fetchItems = async () => {
                             <div>
                               <p className="text-gray-600">Jumlah Barang</p>
                               <p className="font-semibold text-blue-600">
-                                {item.jumlah} {item.satuan}
+                                {item.jumlah} {item.namaBarang}
                               </p>
                             </div>
                             <div>

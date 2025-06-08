@@ -371,7 +371,7 @@ const DonationRequestPage = () => {
                                 {request.item}
                               </span>
                               <p className="text-sm text-gray-600">
-                                Dibutuhkan: {request.quantity} {request.satuan}
+                                Dibutuhkan: {request.quantity} {request.item}
                               </p>
                             </div>
                             <button
@@ -446,7 +446,7 @@ const DonationRequestPage = () => {
                   Item yang Didonasikan
                 </label>
                 <p className="text-gray-800 bg-gray-50 p-2 rounded">
-                  {selectedRequest?.item} (Tersedia: {selectedRequest?.quantity} {selectedRequest?.satuan})
+                  {selectedRequest?.item} (Tersedia: {selectedRequest?.quantity} {selectedRequest?.item})
                 </p>
               </div>
 
@@ -461,7 +461,7 @@ const DonationRequestPage = () => {
                   min="1"
                   max={selectedRequest?.quantity}
                   className="w-full p-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder={`Maksimal ${selectedRequest?.quantity} ${selectedRequest?.satuan}`}
+                  placeholder={`Maksimal ${selectedRequest?.quantity} ${selectedRequest?.item}`}
                   disabled={isSubmitting}
                 />
               </div>

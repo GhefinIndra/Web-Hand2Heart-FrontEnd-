@@ -114,43 +114,74 @@ const ProfilePage = () => {
   };
 
   const fetchUserProfile = async () => {
-    setIsLoading(true);
-    try {
-      const user = JSON.parse(localStorage.getItem("user"));
-      const token = localStorage.getItem("token");
-      
-      if (!user || !user.id || !token) {
-        showToast("User belum login", "error");
-        navigate("/login");
-        return;
-      }
+  setIsLoading(true);
+  try {
+    const user = JSON.parse(localStorage.getItem("user"));
+    const token = localStorage.getItem("token");
+    
+    if (!user || !user.id || !token) {
+      showToast("User belum login", "error");
+      navigate("/login");
+      return;
+    }
 
-      const response = await axios.get(
-        `http://127.0.0.1:8000/api/user/profile/${user.id}`,
+    // Fetch user profile
+    const profileResponse = await axios.get(
+      `http://127.0.0.1:8000/api/user/profile/${user.id}`,
+      {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'X-User-Email': user.email,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    if (!profileResponse.data.success) {
+      throw new Error(profileResponse.data.message || 'Failed to fetch profile');
+    }
+
+    setUserProfile(profileResponse.data.user);
+    setEditedProfile(profileResponse.data.user);
+
+    // Fetch donation history from the same endpoint as donation-history.js
+    try {
+      const donationResponse = await axios.get(
+        'http://127.0.0.1:8000/api/donation',
         {
           headers: {
             'Authorization': `Bearer ${token}`,
             'X-User-Email': user.email,
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
           }
         }
       );
 
-      if (response.data.success) {
-        setUserProfile(response.data.user);
-        setEditedProfile(response.data.user);
-        setDonationHistory(response.data.donations || []);
+      console.log("Donation API Response:", donationResponse.data);
+
+      if (donationResponse.data.success && donationResponse.data.data) {
+        setDonationHistory(donationResponse.data.data);
+        console.log("Donation History Set:", donationResponse.data.data);
       } else {
-        throw new Error(response.data.message || 'Failed to fetch profile');
+        // Fallback: try to get from profile response
+        setDonationHistory(profileResponse.data.donations || []);
+        console.log("Using fallback donations:", profileResponse.data.donations || []);
       }
-    } catch (error) {
-      console.error("Error fetching user profile:", error);
-      const errorMessage = error.response?.data?.message || "Gagal memuat profil";
-      showToast(errorMessage, "error");
-    } finally {
-      setIsLoading(false);
+    } catch (donationError) {
+      console.error("Error fetching donations:", donationError);
+      // Use donations from profile response as fallback
+      setDonationHistory(profileResponse.data.donations || []);
     }
-  };
+
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    const errorMessage = error.response?.data?.message || "Gagal memuat profil";
+    showToast(errorMessage, "error");
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const handleEditToggle = async () => {
     if (isEditing) {
@@ -163,7 +194,7 @@ const ProfilePage = () => {
         const response = await axios.put(
           `http://127.0.0.1:8000/api/user/${user.id}`,
           {
-            full_name: editedProfile.username,
+            full_name: editedProfile.full_name,
             email: editedProfile.email,
             phone: editedProfile.phone,
           },
@@ -177,11 +208,11 @@ const ProfilePage = () => {
         );
         
         if (response.data.success) {
-          setUserProfile(response.data.user);
+          setUserProfile(response.data.data);  // bukan response.data.user
           showToast("Profil berhasil diperbarui! 🎉", "success");
           
           // Update localStorage
-          localStorage.setItem('user', JSON.stringify(response.data.user));
+          localStorage.setItem('user', JSON.stringify(response.data.data)); 
         } else {
           throw new Error(response.data.message || 'Update failed');
         }
@@ -278,7 +309,7 @@ const ProfilePage = () => {
 
   const isAdmin = userProfile.role === "admin" || userProfile.role === "pj_panti";
   const donationCount = donationHistory.length;
-  const pantiTerbantu = [...new Set(donationHistory.map(d => d.orphanageName))].length;
+  const pantiTerbantu = [...new Set(donationHistory.map(d => d.panti?.name).filter(name => name))].length;
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
@@ -332,7 +363,7 @@ const ProfilePage = () => {
               </div>
               
               <h2 className="text-2xl font-bold text-gray-800 mb-1">
-                {userProfile.username || 'Nama Tidak Ditemukan'}
+                {userProfile.full_name || 'Nama Tidak Ditemukan'}
               </h2>
               
               <div className="flex items-center justify-center text-gray-600 mb-2">
@@ -392,7 +423,7 @@ const ProfilePage = () => {
                   Informasi Profil
                 </h3>
                 
-                {renderProfileField('username', 'Nama', <User />)}
+                {renderProfileField('full_name', 'Nama', <User />)}
                 {renderProfileField('email', 'Email', <Mail />, 'email')}
                 {renderProfileField('phone', 'Nomor Telepon', <Phone />, 'tel')}
               </div>
@@ -425,51 +456,7 @@ const ProfilePage = () => {
             </div>
           </div>
 
-          {/* Donation History for Admin (if needed) */}
-          {isAdmin && donationHistory.length > 0 && (
-            <div className="bg-white rounded-2xl shadow-lg p-6">
-              <h3 className="text-lg font-bold text-gray-800 mb-4">Riwayat Donasi</h3>
-              <div className="space-y-4">
-                {donationHistory.map((donation) => (
-                  <div
-                    key={donation.id}
-                    className="border rounded-xl p-4 bg-gray-50"
-                  >
-                    <div className="flex justify-between items-center mb-2">
-                      <h4 className="font-semibold text-blue-700">
-                        {donation.orphanageName}
-                      </h4>
-                      <span className="text-sm text-gray-600 flex items-center">
-                        <Calendar className="mr-1 h-4 w-4" />
-                        {donation.date}
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <div className="flex items-center">
-                        <DollarSign className="mr-2 text-green-500 h-4 w-4" />
-                        <span className="text-sm">
-                          {donation.type === "uang"
-                            ? formatCurrency(donation.amount)
-                            : `${donation.amount} ${donation.item}`}
-                        </span>
-                      </div>
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs ${
-                          donation.type === "uang"
-                            ? "bg-blue-100 text-blue-800"
-                            : "bg-green-100 text-green-800"
-                        }`}
-                      >
-                        {donation.type === "uang"
-                          ? "Donasi Dana"
-                          : "Donasi Barang"}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          
         </div>
       </div>
 
