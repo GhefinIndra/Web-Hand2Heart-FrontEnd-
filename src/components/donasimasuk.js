@@ -168,7 +168,7 @@ const DonationManagement = () => {
         navigate("/login");
         return;
       }
-
+  
       let user;
       try {
         user = JSON.parse(userStr);
@@ -179,7 +179,7 @@ const DonationManagement = () => {
         navigate("/login");
         return;
       }
-
+  
       let userEmail = user?.email || user?.user?.email || user?.username;
       
       if (!userEmail) {
@@ -188,13 +188,23 @@ const DonationManagement = () => {
         navigate("/login");
         return;
       }
-
+  
+      // FIXED: Use the correct endpoints based on status
+      let endpoint;
+      if (newStatus === 'approved') {
+        endpoint = `http://127.0.0.1:8000/api/donation/${donationId}/approve`;
+      } else if (newStatus === 'rejected') {
+        endpoint = `http://127.0.0.1:8000/api/donation/${donationId}/reject`;
+      } else {
+        throw new Error('Invalid status. Only approved or rejected are allowed.');
+      }
+  
+      console.log('Using endpoint:', endpoint);
+  
       // Call API to update donation status
       const response = await axios.put(
-        `http://127.0.0.1:8000/api/donation/${donationId}/status`,
-        {
-          status: newStatus
-        },
+        endpoint,
+        {}, // Empty body since status is determined by endpoint
         {
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -203,9 +213,9 @@ const DonationManagement = () => {
           }
         }
       );
-
+  
       console.log("Update status response:", response.data);
-
+  
       if (response.data.success) {
         // Update local state
         setDonations(prev => prev.map(d => 

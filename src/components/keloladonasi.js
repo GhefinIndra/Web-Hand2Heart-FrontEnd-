@@ -142,11 +142,12 @@ const KeloladonasiPage = () => {
         navigate('/login');
         return;
       }
-
-      const response = await axios.get(`http://127.0.0.1:8000/api/panti/${pantiId}`, {
+  
+      // Use Firebase ID endpoint
+      const response = await axios.get(`http://127.0.0.1:8000/api/panti/firebase/${pantiId}`, {
         headers
       });
-
+  
       if (response.data.success) {
         setPantiInfo(response.data.data);
       }
@@ -160,50 +161,59 @@ const KeloladonasiPage = () => {
     }
   };
 
-  const fetchItems = async () => {
-    setIsLoading(true);
-    try {
-      console.log('=== FETCHING BARANG FOR PANTI ===');
-      
-      const headers = getAuthHeaders();
-      if (!headers) {
-        showToast('Silakan login terlebih dahulu', 'error');
+  // ...existing code...
+const fetchItems = async () => {
+  setIsLoading(true);
+  try {
+    console.log('=== FETCHING BARANG FOR PANTI ===');
+    
+    const headers = getAuthHeaders();
+    if (!headers) {
+      showToast('Silakan login terlebih dahulu', 'error');
+      navigate('/login');
+      return;
+    }
+
+    console.log('Fetching barang for panti Firebase ID:', pantiId);
+    console.log('Using headers:', headers);
+
+    // FIXED: Use the correct endpoint - just /api/barang/{pantiId}
+    const response = await axios.get(`http://127.0.0.1:8000/api/barang/${pantiId}`, {
+      headers
+    });
+
+    console.log('Barang response:', response.data);
+
+    if (response.data.success) {
+      setItems(response.data.data || []);
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch barang');
+    }
+  } catch (error) {
+    console.error("Error fetching barang:", error);
+    if (error.response) {
+      console.error("Error response:", error.response.data);
+      if (error.response.status === 401) {
+        showToast('Sesi telah berakhir. Silakan login kembali', 'error');
+        localStorage.clear();
         navigate('/login');
         return;
-      }
-
-      console.log('Fetching barang for panti:', pantiId);
-      console.log('Using headers:', headers);
-
-      // Ubah API endpoint untuk mengambil barang, bukan donasi
-      const response = await axios.get(`http://127.0.0.1:8000/api/barang/${pantiId}`, {
-        headers
-      });
-
-      console.log('Barang response:', response.data);
-
-      if (response.data.success) {
-        setItems(response.data.data || []); // Barang akan ditampilkan
+      } else if (error.response.status === 404) {
+        console.log('No barang found for this panti, starting with empty list');
+        setItems([]); // Set empty array instead of showing error
       } else {
-        throw new Error(response.data.message || 'Failed to fetch barang');
+        showToast(
+          error.response.data.message || 'Gagal memuat data barang', 
+          'error'
+        );
       }
-    } catch (error) {
-      console.error("Error fetching barang:", error);
-      if (error.response) {
-        console.error("Error response:", error.response.data);
-        if (error.response.status === 401) {
-          showToast('Sesi telah berakhir. Silakan login kembali', 'error');
-          localStorage.clear();
-          navigate('/login');
-          return;
-        }
-      } else {
-        showToast('Gagal terhubung ke server. Periksa koneksi internet Anda', 'error');
-      }
-    } finally {
-      setIsLoading(false);
+    } else {
+      showToast('Gagal terhubung ke server', 'error');
     }
-  };
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   const validateForm = () => {
     const newErrors = {};
@@ -226,9 +236,10 @@ const KeloladonasiPage = () => {
     if (!validateForm()) {
       return;
     }
-
+  
     try {
       console.log('=== SUBMITTING BARANG TO LARAVEL ===');
+      console.log('pantiId from useParams:', pantiId); // Debug pantiId
       
       const headers = getAuthHeaders();
       if (!headers) {
@@ -236,37 +247,49 @@ const KeloladonasiPage = () => {
         navigate('/login');
         return;
       }
-
-      // FIXED: Map frontend form data to Barang model fields
+  
+      // Validate pantiId
+      if (!pantiId || pantiId === 'undefined' || pantiId === 'null') {
+        showToast('ID Panti tidak valid. Silakan kembali ke dashboard.', 'error');
+        navigate('/adminpanti');
+        return;
+      }
+  
+      // FIXED: Send both panti_id and panti_firebase_id
       const submitData = {
-        panti_id: parseInt(pantiId), // Ensure it's integer
-        namaBarang: formData.nama, // Map 'nama' to 'namaBarang'
-        deskripsi: formData.deskripsi || '', // Keep as is
-        jumlah: parseInt(formData.target), // Map 'target' to 'jumlah' and ensure integer
-        satuan: 'buah', // Default unit
-        is_active: true // Default to active
+        panti_id: pantiId, // Backend expects this field
+        panti_firebase_id: pantiId, // Keep this for compatibility
+        namaBarang: formData.nama.trim(),
+        deskripsi: formData.deskripsi?.trim() || '',
+        jumlah: parseInt(formData.target),
+        satuan: 'buah', // You can make this configurable
+        is_active: true
       };
-
-      console.log('Submit data:', submitData);
+  
+      // Validate submitData before sending
+      if (isNaN(submitData.jumlah) || submitData.jumlah <= 0) {
+        showToast('Jumlah harus berupa angka positif', 'error');
+        return;
+      }
+  
+      console.log('Final submit data:', submitData);
       console.log('Using headers:', headers);
-
+  
       let response;
       if (editingItem) {
-        // Update barang jika sedang mengedit
         response = await axios.put(`http://127.0.0.1:8000/api/barang/${editingItem.id}`, submitData, {
           headers
         });
       } else {
-        // Tambah barang baru
         response = await axios.post('http://127.0.0.1:8000/api/barang', submitData, {
           headers
         });
       }
-
+  
       console.log('Submit response:', response.data);
-
+  
       if (response.data.success) {
-        fetchItems(); // Refresh data barang setelah disubmit
+        fetchItems();
         resetForm();
         showToast(
           editingItem ? 'Barang berhasil diperbarui! 🎉' : 'Barang berhasil ditambahkan! 🎉', 
@@ -275,7 +298,7 @@ const KeloladonasiPage = () => {
       } else {
         throw new Error(response.data.message || 'Failed to save barang');
       }
-
+  
     } catch (error) {
       console.error('Submit error:', error);
       if (error.response) {
@@ -287,12 +310,10 @@ const KeloladonasiPage = () => {
           navigate('/login');
           return;
         } else if (error.response.status === 422) {
-          // Validation errors - show detailed error info
           const validationErrors = error.response.data.errors || {};
           console.log('Validation errors:', validationErrors);
           setErrors(validationErrors);
           
-          // Show user-friendly error message
           const errorMessages = Object.values(validationErrors).flat();
           if (errorMessages.length > 0) {
             showToast(`Kesalahan validasi: ${errorMessages.join(', ')}`, 'error');
