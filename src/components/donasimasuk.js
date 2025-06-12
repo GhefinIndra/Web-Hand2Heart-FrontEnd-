@@ -137,12 +137,12 @@ const DonationManagement = () => {
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(d => 
-        d.user?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.item?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.panti?.namaPanti?.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
+  filtered = filtered.filter(d => 
+    d.user?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.item_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    d.panti?.name?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+}
 
     // Filter by selected panti if any
     if (selectedPanti) {
@@ -367,7 +367,7 @@ const DonationManagement = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Nama:</span>
-                  <span className="font-medium">{selectedDonation.user?.full_name || '-'}</span>
+                  <span className="font-medium">{selectedDonation.user?.name || '-'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Email:</span>
@@ -389,7 +389,7 @@ const DonationManagement = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Nama:</span>
-                  <span className="font-medium">{selectedDonation.panti?.namaPanti || '-'}</span>
+                  <span className="font-medium">{selectedDonation.panti?.name || '-'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Kota:</span>
@@ -397,7 +397,7 @@ const DonationManagement = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Kontak:</span>
-                  <span className="font-medium">{selectedDonation.panti?.kontak || '-'}</span>
+                  <span className="font-medium">{selectedDonation.panti?.phone || selectedDonation.panti?.contact || '-'}</span>
                 </div>
               </div>
             </div>
@@ -411,7 +411,7 @@ const DonationManagement = () => {
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Barang:</span>
-                  <span className="font-medium">{selectedDonation.item || '-'}</span>
+                  <span className="font-medium">{selectedDonation.item_name || '-'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Jumlah:</span>
@@ -421,10 +421,10 @@ const DonationManagement = () => {
                   <span className="text-gray-600">Tanggal:</span>
                   <span className="font-medium">{formatDate(selectedDonation.created_at)}</span>
                 </div>
-                {selectedDonation.approved_at && (
+                {selectedDonation.processed_at && (
                   <div className="flex justify-between">
                     <span className="text-gray-600">Diproses:</span>
-                    <span className="font-medium">{formatDate(selectedDonation.approved_at)}</span>
+                    <span className="font-medium">{formatDate(selectedDonation.processed_at)}</span>
                   </div>
                 )}
               </div>
@@ -493,9 +493,9 @@ const DonationManagement = () => {
           <p className="text-gray-600 mb-6">
             Apakah Anda yakin ingin {isApprove ? 'menyetujui' : 'menolak'} donasi{' '}
             <span className="font-semibold">
-              {selectedDonation.amount} {selectedDonation.item}
+              {selectedDonation.amount} {selectedDonation.item_name}
             </span>{' '}
-            dari <span className="font-semibold">{selectedDonation.user?.full_name}</span>?
+            dari <span className="font-semibold">{selectedDonation.user?.name}</span>?
           </p>
           
           <div className="flex gap-3">
@@ -679,17 +679,17 @@ const DonationManagement = () => {
                           </div>
                           <div>
                             <h4 className="font-semibold text-gray-800 text-lg">
-                              {donation.user?.name || donation.user?.full_name || 'Unknown User'}
+                              {donation.user?.name || 'Unknown User'} 
                             </h4>
                             <p className="text-sm text-gray-600">
-                              {donation.panti?.name || donation.panti?.namaPanti || 'Unknown Panti'} • {donation.panti?.kota || 'Unknown City'}
+                              {donation.panti?.name || 'Unknown Panti'}
                             </p>
                           </div>
                         </div>
                         
                         <div className="ml-16 space-y-2">
                           <p className="font-medium text-gray-700 text-lg">
-                            {donation.amount} {donation.item}
+                            {donation.amount} {donation.item_name}
                           </p>
                           <div className="flex items-center gap-2 text-sm text-gray-500">
                             <Calendar className="h-4 w-4" />
